@@ -77,6 +77,11 @@
   .inn-name { font-size: 18px; font-weight: 700; }
   .inn-addr { font-size: 12px; color: var(--sub); margin-top: 4px; }
   .inn-note { font-size: 13px; line-height: 1.8; margin-top: 12px; color: #555; }
+  .wifi-box {
+    margin-top: 14px; padding: 12px 14px; border-radius: 12px;
+    background: var(--accent-soft); font-size: 13px; line-height: 1.8;
+  }
+  .wifi-box b { color: var(--accent); }
 
   .dish { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px dashed var(--line); }
   .dish:last-child { border-bottom: none; }
@@ -193,15 +198,26 @@
 
   <div class="card">
     <h2>🏨 今夜のお宿</h2>
-    <div class="inn-photo">♨️</div>
+    <div class="inn-photo">🏖</div>
     <div class="inn-name" id="inn-name"></div>
     <div class="inn-addr" id="inn-addr"></div>
     <div class="inn-note" id="inn-note"></div>
+    <div class="wifi-box" id="wifi-box"></div>
   </div>
 
   <div class="card">
-    <h2>🍽 お料理</h2>
-    <div id="dish-list"></div>
+    <h2>🍖 BBQメモ</h2>
+    <div id="bbq-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>🛒 買い出しスポット</h2>
+    <div id="shop-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>🗺 アクセス</h2>
+    <div id="access-list"></div>
   </div>
 
   <div class="card">
@@ -234,21 +250,36 @@
 ===================================================== */
 const TRIP = {
   inn: {
-    name: "湯けむりの宿 山風荘",
-    address: "長野県・温泉郷",
-    note: "源泉かけ流しの露天風呂つき。チェックインは15:00から。浴衣を着てのんびりしよう。"
+    name: "Sunshine Pool Villa（九十九里町のヴィラ）",
+    address: "〒283-0102 千葉県山武郡九十九里町小関2290-1",
+    note: "6/20(土)〜21(日)・ホスト：Akiさん。チェックインは15:00から。スタッフ無人のセルフチェックイン方式で、ドアの暗証番号は当日15:00頃にAirbnbメッセージで届くので要チェック。"
   },
-  dishes: [
-    { icon: "🍲", name: "信州きのこ鍋", desc: "地元きのこたっぷりの名物鍋" },
-    { icon: "🐟", name: "岩魚の塩焼き", desc: "囲炉裏でじっくり焼いた川魚" },
-    { icon: "🍜", name: "手打ちそば", desc: "宿のご主人が毎朝打つ十割そば" },
-    { icon: "🍮", name: "温泉プリン", desc: "デザートはお風呂上がりに" }
+  wifi: {
+    ssid: "sunshine pool villa",
+    pass: "Sunshine99"
+  },
+  access: [
+    { icon: "🚗", name: "九十九里有料道路 不動堂ICから", desc: "車で約3分" },
+    { icon: "🚗", name: "九十九里ICから", desc: "車で約7分" },
+    { icon: "🚗", name: "千葉東金道路 東金料金所から", desc: "車で約30分" }
+  ],
+  bbq: [
+    { icon: "🔥", name: "BBQは庭で（炭火グリル）", desc: "屋内での焼肉は禁止！" },
+    { icon: "🍽", name: "施設にあるもの", desc: "BBQグリル・専用食器・塩・ブラックペッパー" },
+    { icon: "🛍", name: "持っていくもの", desc: "炭・食材・その他の調味料は自分たちで用意" },
+    { icon: "🧽", name: "あとかたづけ", desc: "食器洗いはお願い（網は清掃スタッフが洗ってくれる）" }
+  ],
+  shops: [
+    { icon: "🐟", name: "九十九里 海の駅", desc: "車2分・海鮮や野菜の買い出しに｜九十九里町小関2347-98｜☎ 0475-76-1734" },
+    { icon: "🛒", name: "トウズ（大型スーパー）", desc: "車6分｜山武市本須賀4578｜9:30〜21:30" },
+    { icon: "🛒", name: "スーパーランドローム 九十九里店", desc: "車8分｜九十九里町片貝370-1" },
+    { icon: "🛒", name: "スーパータイヨー ビッグハウス東金店", desc: "車20分｜東金市押堀字広田685" }
   ],
   quests: [
-    { id: "sa",       title: "SAに寄る",           desc: "サービスエリアでご当地グルメを探せ", pts: 10 },
-    { id: "checkin",  title: "チェックイン",        desc: "宿に到着してフロントで手続き",       pts: 20 },
-    { id: "onsen",    title: "温泉に入る",          desc: "露天風呂を制覇しよう",               pts: 15 },
-    { id: "dinner",   title: "夕食を完食する",      desc: "残さず食べてミッションクリア",       pts: 15 },
+    { id: "shopping", title: "海の駅で買い出し",    desc: "車2分の海の駅で海鮮と野菜をゲット",   pts: 10 },
+    { id: "checkin",  title: "チェックイン",        desc: "15:00以降に暗証番号でセルフチェックイン", pts: 20 },
+    { id: "pool",     title: "プールに入る",        desc: "ヴィラのプールを満喫しよう",          pts: 15 },
+    { id: "bbq",      title: "庭でBBQ",            desc: "炭火グリルでお肉を焼きまくれ",        pts: 15 },
     { id: "photo",    title: "みんなで記念写真",    desc: "全員集合で1枚撮影",                  pts: 10 }
   ]
 };
@@ -318,15 +349,22 @@ function renderMain() {
   $("inn-name").textContent = TRIP.inn.name;
   $("inn-addr").textContent = TRIP.inn.address;
   $("inn-note").textContent = TRIP.inn.note;
+  $("wifi-box").innerHTML =
+    `📶 <b>Wi-Fi</b><br>SSID：${escapeHtml(TRIP.wifi.ssid)}<br>パスワード：${escapeHtml(TRIP.wifi.pass)}`;
 
-  $("dish-list").innerHTML = TRIP.dishes.map(d => `
-    <div class="dish">
-      <span class="icon">${d.icon}</span>
-      <div>
-        <div class="d-name">${escapeHtml(d.name)}</div>
-        <div class="d-desc">${escapeHtml(d.desc)}</div>
-      </div>
-    </div>`).join("");
+  const renderList = (id, items) => {
+    $(id).innerHTML = items.map(d => `
+      <div class="dish">
+        <span class="icon">${d.icon}</span>
+        <div>
+          <div class="d-name">${escapeHtml(d.name)}</div>
+          <div class="d-desc">${escapeHtml(d.desc)}</div>
+        </div>
+      </div>`).join("");
+  };
+  renderList("bbq-list", TRIP.bbq);
+  renderList("shop-list", TRIP.shops);
+  renderList("access-list", TRIP.access);
 
   renderQuests();
 
