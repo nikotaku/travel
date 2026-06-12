@@ -257,7 +257,7 @@
 <!-- ⓪ オープニング：ロゴ＆WELCOME -->
 <section id="screen-splash" class="screen full">
   <div class="splash-inner">
-    <img class="logo-img" src="images/logo.png" alt="Sunshine Pool Villa"
+    <img class="logo-img" src="images/logo.png.jpeg" alt="Sunshine Pool Villa"
          onerror="this.style.display='none';document.getElementById('logo-css').style.display='block'">
     <div class="logo-css" id="logo-css" style="display:none">
       <div class="l-arc">kujukuri beach</div>
@@ -637,10 +637,11 @@ $("btn-reset").addEventListener("click", () => {
 
 /* ---------- オープニング ---------- */
 const SLIDES = [
-  { img: "images/slide1.jpg", cap: "プールつきのヴィラで過ごす週末", bg: "linear-gradient(160deg,#7ec8e3,#2b6f9e)", emoji: "🏖" },
-  { img: "images/slide2.jpg", cap: "夜は庭で焚き火 ＆ BBQ",        bg: "linear-gradient(160deg,#1d2b4f,#0d1326)", emoji: "🔥" },
-  { img: "images/slide3.jpg", cap: "開放感たっぷりのリビング",      bg: "linear-gradient(160deg,#e8d9c0,#b89b76)", emoji: "🛋" },
-  { img: "images/slide4.jpg", cap: "ナイトプールのライトアップ",    bg: "linear-gradient(160deg,#6f42c1,#1b1140)", emoji: "🌙" }
+  { img: "images/slide1.png.jpeg", cap: "プールつきのヴィラで過ごす週末", bg: "linear-gradient(160deg,#7ec8e3,#2b6f9e)", emoji: "🏖" },
+  { img: "images/slide2.png.jpeg", cap: "薪ストーブ式バレルサウナも！",  bg: "linear-gradient(160deg,#b07b4a,#5a3a22)", emoji: "🧖" },
+  { img: "images/slide3.png.jpeg", cap: "ナイトプールのライトアップ",    bg: "linear-gradient(160deg,#6f42c1,#1b1140)", emoji: "🌙" },
+  { img: "images/slide4.png.jpeg", cap: "夜は庭で焚き火 ＆ BBQ",        bg: "linear-gradient(160deg,#1d2b4f,#0d1326)", emoji: "🔥" },
+  { img: "images/slide5.png.jpg",  cap: "開放感たっぷりのリビング",      bg: "linear-gradient(160deg,#e8d9c0,#b89b76)", emoji: "🛋" }
 ];
 
 $("slides").innerHTML = SLIDES.map(s => `

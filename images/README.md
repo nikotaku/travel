@@ -1,14 +1,12 @@
 # オープニング用の画像
 
-このフォルダに以下のファイル名で画像を置くと、オープニングに表示されます。
-(置かなくてもグラデーション+絵文字のプレースホルダで動きます)
+オープニングで使用中の画像です(ファイル名を変える場合は index.html の SLIDES も合わせて変更)。
 
 | ファイル名 | 内容 |
 |---|---|
-| `logo.png` | Sunshine Pool Villa のロゴ(黒背景のやつ) |
-| `slide1.jpg` | 昼のプールとヴィラ外観 |
-| `slide2.jpg` | 夜の庭・焚き火 |
-| `slide3.jpg` | リビング |
-| `slide4.jpg` | 紫ライトアップのナイトプール |
-
-スマホからは GitHub のリポジトリページ → `images` フォルダ → `Add file` → `Upload files` で追加できます。
+| `logo.png.jpeg` | Sunshine Pool Villa のロゴ |
+| `slide1.png.jpeg` | 昼のプールとヴィラ外観 |
+| `slide2.png.jpeg` | 薪ストーブ式バレルサウナ |
+| `slide3.png.jpeg` | 紫ライトアップのナイトプール |
+| `slide4.png.jpeg` | 夜の庭・焚き火 |
+| `slide5.png.jpg` | リビング |
