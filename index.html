@@ -223,33 +223,47 @@
   .btn-welcome:active { background: rgba(236,230,216,.15); }
   @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(236,230,216,.25); } 50% { box-shadow: 0 0 0 10px rgba(236,230,216,0); } }
 
-  #screen-slideshow { overflow: hidden; cursor: pointer; }
-  .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1s ease; pointer-events: none; }
-  .slide.on { opacity: 1; }
-  .slide .s-bg {
-    position: absolute; inset: 0;
+  /* ---------- トップのスライドバナー ---------- */
+  .bn-wrap { margin-top: 4px; }
+  .banner {
+    display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+    border-radius: var(--radius); -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; box-shadow: 0 2px 10px rgba(0,0,0,.06);
+  }
+  .banner::-webkit-scrollbar { display: none; }
+  .bn-slide {
+    flex: 0 0 100%; height: 200px; scroll-snap-align: center; position: relative;
     background-size: cover; background-position: center;
-    display: flex; align-items: center; justify-content: center; font-size: 96px;
+    display: flex; align-items: center; justify-content: center; font-size: 64px;
   }
-  .slide.on .s-bg { animation: kenburns 4.5s linear forwards; }
-  @keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.09); } }
-  .slide .s-cap {
-    position: absolute; left: 0; right: 0; bottom: 96px; text-align: center;
-    color: #fff; font-size: 18px; font-weight: 700; letter-spacing: .12em;
-    text-shadow: 0 2px 14px rgba(0,0,0,.65); padding: 0 24px;
+  .bn-cap {
+    position: absolute; left: 14px; bottom: 12px;
+    color: #fff; font-size: 13px; font-weight: 700; letter-spacing: .06em;
+    text-shadow: 0 1px 10px rgba(0,0,0,.65);
   }
-  .ss-dots {
-    position: absolute; left: 0; right: 0; bottom: 56px;
-    display: flex; justify-content: center; gap: 8px; z-index: 2;
+  .bn-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+  .bn-dots i { width: 6px; height: 6px; border-radius: 50%; background: #d8d1c4; transition: background .3s; }
+  .bn-dots i.on { background: var(--accent); }
+
+  /* ---------- メンバーカード ---------- */
+  .mem-carousel {
+    display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory;
+    padding: 4px 2px 8px; -webkit-overflow-scrolling: touch; scrollbar-width: none;
   }
-  .ss-dots i { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.35); transition: background .3s; }
-  .ss-dots i.on { background: #fff; }
-  .ss-skip {
-    position: absolute; top: 20px; right: 20px; z-index: 2;
-    padding: 8px 18px; font-size: 12px; font-weight: 700; letter-spacing: .15em;
-    color: #fff; background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.5);
-    border-radius: 999px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  .mem-carousel::-webkit-scrollbar { display: none; }
+  .mem-card {
+    flex: 0 0 78%; scroll-snap-align: center; text-align: center;
+    border: 1.5px solid var(--line); border-radius: 14px; padding: 20px 16px;
+    background: #fffdf9;
   }
+  .mc-avatar {
+    width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 700; color: #fff;
+  }
+  .mc-name { font-size: 16px; font-weight: 700; }
+  .mc-tags { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .mc-stats { margin-top: 12px; font-size: 13px; font-weight: 600; color: #555; }
 </style>
 </head>
 <body>
@@ -270,11 +284,6 @@
 </section>
 
 <!-- ⓪' オープニング：スライドショー -->
-<section id="screen-slideshow" class="screen full">
-  <div id="slides"></div>
-  <div class="ss-dots" id="ss-dots"></div>
-  <button class="ss-skip" id="btn-skip">スキップ ▸</button>
-</section>
 
 <!-- ① 名前入力 -->
 <section id="screen-name" class="screen">
@@ -313,6 +322,11 @@
 
 <!-- ③ メイン（しおり） -->
 <section id="screen-main" class="screen">
+  <div class="bn-wrap">
+    <div class="banner" id="banner"></div>
+    <div class="bn-dots" id="bn-dots"></div>
+  </div>
+
   <div class="greeting">
     <div class="hello">いってらっしゃい 🌤</div>
     <div class="name" id="disp-name"></div>
@@ -336,6 +350,12 @@
   <div class="card">
     <h2>🛒 買い出しスポット</h2>
     <div id="shop-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>👥 メンバー</h2>
+    <p class="tip-note">横にスワイプしてみんなのカードを見よう ▸</p>
+    <div class="mem-carousel" id="mem-carousel"></div>
   </div>
 
   <div class="card">
@@ -508,6 +528,8 @@ $("btn-questions").addEventListener("click", () => {
   state.mbti = $("input-mbti").value;
   state.from = $("input-from").value.trim();
   state.job  = $("input-job").value.trim();
+  state.profiles = state.profiles || {};
+  state.profiles[state.name] = { mbti: state.mbti, from: state.from, job: state.job };
   save();
   renderMain();
   show("screen-main");
@@ -551,6 +573,7 @@ function renderMain() {
     save();
   }
   renderMembers();
+  initBanner();
 }
 
 function renderQuests() {
@@ -610,6 +633,7 @@ function renderMembers() {
       renderMembers();
     });
   });
+  renderMemberCards();
 }
 
 $("btn-member").addEventListener("click", () => {
@@ -644,30 +668,7 @@ const SLIDES = [
   { img: "images/slide5.png.jpg",  cap: "開放感たっぷりのリビング",      bg: "linear-gradient(160deg,#e8d9c0,#b89b76)", emoji: "🛋" }
 ];
 
-$("slides").innerHTML = SLIDES.map(s => `
-  <div class="slide">
-    <div class="s-bg" style="background-image:url('${s.img}'),${s.bg}"><span class="s-emoji">${s.emoji}</span></div>
-    <div class="s-cap">${escapeHtml(s.cap)}</div>
-  </div>`).join("");
-$("ss-dots").innerHTML = SLIDES.map(() => "<i></i>").join("");
-// 写真が読み込めたスライドは絵文字プレースホルダを消す
-SLIDES.forEach((s, i) => {
-  const im = new Image();
-  im.onload = () => document.querySelectorAll("#slides .slide .s-emoji")[i].style.display = "none";
-  im.src = s.img;
-});
-
-let slideIdx = -1, slideTimer = null;
-function advanceSlide() {
-  clearTimeout(slideTimer);
-  slideIdx++;
-  if (slideIdx >= SLIDES.length) { endOpening(); return; }
-  document.querySelectorAll("#slides .slide").forEach((el, i) => el.classList.toggle("on", i === slideIdx));
-  document.querySelectorAll("#ss-dots i").forEach((el, i) => el.classList.toggle("on", i === slideIdx));
-  slideTimer = setTimeout(advanceSlide, 3400);
-}
 function endOpening() {
-  clearTimeout(slideTimer);
   if (state.name && state.mbti && state.from && state.job) {
     renderMain();
     show("screen-main");
@@ -677,9 +678,66 @@ function endOpening() {
     show("screen-name");
   }
 }
-$("btn-welcome").addEventListener("click", () => { show("screen-slideshow"); slideIdx = -1; advanceSlide(); });
-$("screen-slideshow").addEventListener("click", () => advanceSlide());
-$("btn-skip").addEventListener("click", e => { e.stopPropagation(); endOpening(); });
+$("btn-welcome").addEventListener("click", endOpening);
+
+/* ---------- トップのスライドバナー ---------- */
+function initBanner() {
+  const el = $("banner");
+  if (el._init) return;
+  el._init = true;
+  el.innerHTML = SLIDES.map(s => `
+    <div class="bn-slide" style="background-image:url('${s.img}'),${s.bg}">
+      <span class="bn-emoji">${s.emoji}</span>
+      <span class="bn-cap">${escapeHtml(s.cap)}</span>
+    </div>`).join("");
+  $("bn-dots").innerHTML = SLIDES.map((_, i) => `<i class="${i === 0 ? "on" : ""}"></i>`).join("");
+  // 写真が読み込めたスライドは絵文字プレースホルダを消す
+  SLIDES.forEach((s, i) => {
+    const im = new Image();
+    im.onload = () => document.querySelectorAll(".bn-slide .bn-emoji")[i].style.display = "none";
+    im.src = s.img;
+  });
+  let idx = 0;
+  const timer = setInterval(() => {
+    if (el.clientWidth === 0) return; // 非表示中は何もしない
+    idx = (idx + 1) % SLIDES.length;
+    el.scrollTo({ left: idx * el.clientWidth, behavior: "smooth" });
+  }, 3500);
+  // 手でスワイプしたら自動送りは停止
+  el.addEventListener("pointerdown", () => clearInterval(timer));
+  el.addEventListener("scroll", () => {
+    const i = Math.round(el.scrollLeft / el.clientWidth);
+    idx = i;
+    document.querySelectorAll("#bn-dots i").forEach((d, j) => d.classList.toggle("on", j === i));
+  }, { passive: true });
+}
+
+/* ---------- メンバーカード ---------- */
+function renderMemberCards() {
+  const members = state.members || [];
+  if (members.length === 0) {
+    $("mem-carousel").innerHTML = '<p class="tip-note">チップ欄からメンバーを追加してね</p>';
+    return;
+  }
+  const votes = state.wcVotes || {};
+  const profiles = state.profiles || {};
+  $("mem-carousel").innerHTML = members.map(m => {
+    const p = profiles[m.name];
+    const v = votes[m.name];
+    const t = v ? TEAMS.find(t => t.name === v) : null;
+    const hue = ([...m.name][0].codePointAt(0) * 47) % 360;
+    const tags = p
+      ? ["MBTI: " + p.mbti, "出身: " + p.from, "仕事: " + p.job]
+          .map(x => `<span class="tag">${escapeHtml(x)}</span>`).join("")
+      : '<span class="tag">プロフィール未登録</span>';
+    return `<div class="mem-card">
+      <div class="mc-avatar" style="background:hsl(${hue},55%,62%)">${escapeHtml([...m.name][0])}</div>
+      <div class="mc-name">${escapeHtml(m.name)}</div>
+      <div class="mc-tags">${tags}</div>
+      <div class="mc-stats">🪙 ${m.chips}枚${t ? `　⚽ ${t.flag} ${escapeHtml(t.name)}` : ""}</div>
+    </div>`;
+  }).join("");
+}
 
 /* ---------- あそびコーナー：Wカップ予想投票 ---------- */
 const TEAMS = [
