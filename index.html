@@ -159,6 +159,12 @@
     flex-shrink: 0; padding: 10px 18px; border: none; border-radius: 999px;
     background: var(--accent); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer;
   }
+  .play-banner.locked { background: #eee9e0; }
+  .play-banner.locked .q-title { color: var(--sub); }
+  .play-banner.locked button {
+    background: #cfc7b8; cursor: not-allowed; letter-spacing: .05em;
+  }
+  .play-banner .countdown { font-size: 11px; font-weight: 700; color: var(--accent); margin-top: 4px; }
   .team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
   .team {
     padding: 10px 4px; border: 1.5px solid var(--line); border-radius: 12px;
@@ -370,10 +376,10 @@
     </div>
     <div class="progress"><span id="quest-bar"></span></div>
     <div id="quest-list"></div>
-    <div class="play-banner">
+    <div class="play-banner" id="play-banner">
       <div>
-        <div class="q-title">🏆 Wカップ予想投票</div>
-        <div class="q-desc">優勝チームをみんなで予想！ミニゲームもあるよ</div>
+        <div class="q-title" id="play-title">🏆 Wカップ予想投票</div>
+        <div class="q-desc" id="play-desc">優勝チームをみんなで予想！ミニゲームもあるよ</div>
       </div>
       <button id="btn-play">はじめる</button>
     </div>
@@ -574,6 +580,7 @@ function renderMain() {
   }
   renderMembers();
   initBanner();
+  renderPlayBanner();
 }
 
 function renderQuests() {
@@ -791,8 +798,45 @@ function renderVotes() {
   }).join("");
 }
 $("vote-who").addEventListener("change", renderTeams);
-$("btn-play").addEventListener("click", () => { renderPlay(); show("screen-play"); });
+$("btn-play").addEventListener("click", () => {
+  if (!isPlayOpen()) { toast(`🔒 6/20にオープンするよ！${openCountdownText()}`); return; }
+  renderPlay();
+  show("screen-play");
+});
 $("btn-play-back").addEventListener("click", () => { renderMain(); show("screen-main"); });
+
+/* ---------- 企画のオープン日（6/20 0:00 〜） ---------- */
+const PLAY_OPEN = new Date(2026, 5, 20, 0, 0, 0); // 2026-06-20 00:00 ローカル時間
+function isPlayOpen() {
+  return Date.now() >= PLAY_OPEN.getTime();
+}
+function openCountdownText() {
+  const ms = PLAY_OPEN.getTime() - Date.now();
+  if (ms <= 0) return "";
+  const days = Math.floor(ms / 86400000);
+  const hours = Math.floor((ms % 86400000) / 3600000);
+  if (days >= 1) return `あと${days}日${hours}時間`;
+  const mins = Math.floor((ms % 3600000) / 60000);
+  return `あと${hours}時間${mins}分`;
+}
+function renderPlayBanner() {
+  const banner = $("play-banner");
+  const btn = $("btn-play");
+  if (isPlayOpen()) {
+    banner.classList.remove("locked");
+    $("play-title").textContent = "🏆 Wカップ予想投票";
+    $("play-desc").innerHTML = "優勝チームをみんなで予想！ミニゲームもあるよ";
+    btn.textContent = "はじめる";
+    btn.disabled = false;
+  } else {
+    banner.classList.add("locked");
+    $("play-title").textContent = "🔒 Wカップ予想投票・ミニゲーム";
+    $("play-desc").innerHTML =
+      `COMING SOON … 6/20オープン予定<div class="countdown">${openCountdownText()}</div>`;
+    btn.textContent = "6/20〜";
+    btn.disabled = true;
+  }
+}
 
 /* ---------- あそびコーナー：ミニゲーム ---------- */
 document.querySelectorAll(".game-tab").forEach(tab => {
@@ -853,6 +897,19 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
+
+/* ---------- 企画ロック中はカウントダウンを更新し、6/20に自動オープン ---------- */
+let playWasLocked = !isPlayOpen();
+setInterval(() => {
+  if (!$("screen-main").classList.contains("active")) return;
+  if (playWasLocked) {
+    renderPlayBanner();
+    if (isPlayOpen()) {
+      playWasLocked = false;
+      toast("🎉 Wカップ予想投票がオープンしました！");
+    }
+  }
+}, 30000);
 
 /* ---------- 起動：まずオープニング（ロゴ＆WELCOME）から ---------- */
 show("screen-splash");
