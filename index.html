@@ -314,6 +314,50 @@
   .mc-name { font-size: 16px; font-weight: 700; }
   .mc-tags { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
   .mc-stats { margin-top: 12px; font-size: 13px; font-weight: 600; color: #555; }
+
+  /* ---------- 持ち物トグル ---------- */
+  .toggle-head {
+    width: 100%; display: flex; align-items: center; justify-content: space-between;
+    background: none; border: none; cursor: pointer; padding: 2px 0;
+    font-size: 15px; font-weight: 700; letter-spacing: .08em; color: var(--accent);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .toggle-arrow { transition: transform .25s; font-size: 12px; }
+  .toggle-head[aria-expanded="true"] .toggle-arrow { transform: rotate(180deg); }
+  .toggle-body { margin-top: 6px; }
+  .bring {
+    display: flex; align-items: flex-start; gap: 10px; padding: 11px 2px;
+    border-bottom: 1px dashed var(--line); cursor: pointer; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .bring:last-child { border-bottom: none; }
+  .bring .b-check {
+    width: 22px; height: 22px; flex-shrink: 0; border-radius: 6px;
+    border: 2px solid var(--line); display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: #fff; transition: all .2s; margin-top: 1px;
+  }
+  .bring.on .b-check { background: var(--green); border-color: var(--green); }
+  .bring .b-text { flex: 1; font-size: 14px; line-height: 1.5; }
+  .bring.on .b-text { color: var(--sub); text-decoration: line-through; }
+  .bring .b-note { font-size: 11px; color: var(--sub); }
+
+  /* ---------- ミッション予告 ---------- */
+  .mission-card { background: linear-gradient(135deg, #fff3e6, #ffe7d1); }
+  .mission-card h2 { color: var(--accent); }
+  .mission-card p { font-size: 14px; line-height: 1.9; color: #6b5a45; }
+  .mission-card .gift { font-size: 40px; text-align: center; display: block; margin: 6px 0 12px; }
+
+  /* ---------- カードのカミングスーン ---------- */
+  .card.lockable { position: relative; overflow: hidden; }
+  .card.locked .lock-inner { filter: blur(3px); opacity: .45; pointer-events: none; user-select: none; }
+  .lock-overlay {
+    display: none; position: absolute; inset: 0; z-index: 3;
+    flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    background: rgba(255,255,255,.55); text-align: center;
+  }
+  .card.locked .lock-overlay { display: flex; }
+  .lock-overlay .lo-title { font-size: 16px; font-weight: 800; letter-spacing: .12em; color: var(--ink); }
+  .lock-overlay .lo-sub { font-size: 12px; font-weight: 700; color: var(--accent); }
 </style>
 </head>
 <body>
@@ -384,6 +428,23 @@
   </div>
 
   <div class="card">
+    <button class="toggle-head" id="bring-toggle" aria-expanded="false">
+      <span>🎒 持ち物を見る</span>
+      <span class="toggle-arrow">▼</span>
+    </button>
+    <div class="toggle-body" id="bring-body" hidden>
+      <div id="bring-list"></div>
+    </div>
+  </div>
+
+  <div class="card mission-card">
+    <h2>🎁 ミッション</h2>
+    <span class="gift">🎁</span>
+    <p>この旅には様々なミッションが用意されています。<br>
+       ミッションクリアで素敵な景品も。<br><b>お楽しみに！</b></p>
+  </div>
+
+  <div class="card">
     <h2>🏨 今夜のお宿</h2>
     <div class="inn-photo">🏖</div>
     <div class="inn-name" id="inn-name"></div>
@@ -414,18 +475,13 @@
   </div>
 
   <div class="card">
-    <div class="quest-head">
-      <h2 style="margin:0">⚔️ イベント</h2>
-      <span class="quest-count" id="quest-count"></span>
-    </div>
-    <div class="progress"><span id="quest-bar"></span></div>
-    <div id="quest-list"></div>
+    <h2>🎮 あそびコーナー</h2>
     <div class="play-banner" id="play-banner">
       <div>
-        <div class="q-title" id="play-title">🏆 Wカップ予想投票</div>
-        <div class="q-desc" id="play-desc">優勝チームをみんなで予想！ミニゲームもあるよ</div>
+        <div class="q-title">👑 料理王は誰だ？！ ほか</div>
+        <div class="q-desc">料理王は<b>開催中</b>！Wカップ予想・ミニゲームは準備中…</div>
       </div>
-      <button id="btn-play">はじめる</button>
+      <button id="btn-play">ひらく</button>
     </div>
   </div>
 
@@ -447,15 +503,6 @@
   <div class="greeting">
     <div class="hello">あそびコーナー ⚽</div>
     <div class="name">Wカップ予想・料理王・ミニゲーム</div>
-  </div>
-
-  <div class="card">
-    <h2>🏆 Wカップ優勝予想投票</h2>
-    <p class="tip-note">2026 ワールドカップ、優勝するのはどこ？<br>投票する人を選んで、チームをタップ！</p>
-    <label for="vote-who">投票する人</label>
-    <select id="vote-who"></select>
-    <div class="team-grid" id="team-grid"></div>
-    <div id="vote-result"></div>
   </div>
 
   <div class="card">
@@ -488,7 +535,27 @@
     <div id="cook-results"></div>
   </div>
 
-  <div class="card">
+  <div class="card lockable" id="lock-wc">
+    <div class="lock-overlay">
+      <div class="lo-title">🔒 COMING SOON</div>
+      <div class="lo-sub" id="wc-sub">6/20オープン予定</div>
+    </div>
+    <div class="lock-inner">
+      <h2>🏆 Wカップ優勝予想投票</h2>
+      <p class="tip-note">2026 ワールドカップ、優勝するのはどこ？<br>投票する人を選んで、チームをタップ！</p>
+      <label for="vote-who">投票する人</label>
+      <select id="vote-who"></select>
+      <div class="team-grid" id="team-grid"></div>
+      <div id="vote-result"></div>
+    </div>
+  </div>
+
+  <div class="card lockable" id="lock-mg">
+    <div class="lock-overlay">
+      <div class="lo-title">🔒 COMING SOON</div>
+      <div class="lo-sub" id="mg-sub">6/20オープン予定</div>
+    </div>
+    <div class="lock-inner">
     <h2>🎮 ミニゲーム</h2>
     <div class="game-tabs">
       <button class="game-tab" data-g="roulette">🎯 ルーレット</button>
@@ -512,6 +579,7 @@
         <button class="g-btn jk" data-h="1">✌️</button>
         <button class="g-btn jk" data-h="2">✋</button>
       </div>
+    </div>
     </div>
   </div>
 
@@ -550,6 +618,19 @@ const TRIP = {
     { icon: "🛒", name: "トウズ（大型スーパー）", desc: "車6分｜山武市本須賀4578｜9:30〜21:30" },
     { icon: "🛒", name: "スーパーランドローム 九十九里店", desc: "車8分｜九十九里町片貝370-1" },
     { icon: "🛒", name: "スーパータイヨー ビッグハウス東金店", desc: "車20分｜東金市押堀字広田685" }
+  ],
+  bring: [
+    { id: "swim",    text: "水着・ラッシュガード",     note: "プールで遊ぶ人は必須" },
+    { id: "towel",   text: "タオル・バスタオル",       note: "プール／お風呂用に多めに" },
+    { id: "charcoal",text: "BBQの炭",                note: "施設には無いので持参" },
+    { id: "food",    text: "BBQ・しゃぶしゃぶの食材",  note: "海の駅やスーパーで買ってもOK" },
+    { id: "season",  text: "調味料（塩・胡椒以外）",   note: "塩・黒胡椒は施設にあり" },
+    { id: "drink",   text: "飲み物",                 note: "アルコール・ソフトドリンク" },
+    { id: "sunscreen",text: "日焼け止め・サングラス",  note: "日中のプールに" },
+    { id: "sandal",  text: "サンダル",               note: "庭・プールサイド用" },
+    { id: "amenity", text: "歯ブラシ・洗面用具",      note: "" },
+    { id: "charger", text: "スマホ充電器",            note: "" },
+    { id: "change",  text: "着替え・パジャマ",         note: "1泊分" }
   ],
   quests: [
     { id: "shopping", title: "海の駅で買い出し",    desc: "車2分の海の駅で海鮮と野菜をゲット",   pts: 10 },
@@ -644,7 +725,7 @@ function renderMain() {
   renderList("shop-list", TRIP.shops);
   renderList("access-list", TRIP.access);
 
-  renderQuests();
+  renderBring();
 
   // 自分を最初のメンバーとして登録
   state.members = state.members || [];
@@ -654,40 +735,33 @@ function renderMain() {
   }
   renderMembers();
   initBanner();
-  renderPlayBanner();
 }
 
-function renderQuests() {
-  const done = state.done || {};
-  $("quest-list").innerHTML = TRIP.quests.map(q => `
-    <div class="quest ${done[q.id] ? "done" : ""}" data-id="${q.id}">
-      <span class="check">${done[q.id] ? "✓" : ""}</span>
-      <div class="q-body">
-        <div class="q-title">${escapeHtml(q.title)}</div>
-        <div class="q-desc">${escapeHtml(q.desc)}</div>
-      </div>
-      <span class="q-pts">+${q.pts}pt</span>
+/* ---------- 持ち物リスト（チェック式） ---------- */
+function renderBring() {
+  const checked = state.bring || {};
+  $("bring-list").innerHTML = TRIP.bring.map(b => `
+    <div class="bring ${checked[b.id] ? "on" : ""}" data-id="${b.id}">
+      <span class="b-check">${checked[b.id] ? "✓" : ""}</span>
+      <div class="b-text">${escapeHtml(b.text)}${b.note ? `<div class="b-note">${escapeHtml(b.note)}</div>` : ""}</div>
     </div>`).join("");
-
-  const count = TRIP.quests.filter(q => done[q.id]).length;
-  $("quest-count").textContent = `${count} / ${TRIP.quests.length} 達成`;
-  $("quest-bar").style.width = (count / TRIP.quests.length * 100) + "%";
-
-  document.querySelectorAll(".quest").forEach(el => {
+  document.querySelectorAll("#bring-list .bring").forEach(el => {
     el.addEventListener("click", () => {
       const id = el.dataset.id;
-      state.done = state.done || {};
-      state.done[id] = !state.done[id];
+      state.bring = state.bring || {};
+      state.bring[id] = !state.bring[id];
       save();
-      renderQuests();
-      if (state.done[id]) {
-        const q = TRIP.quests.find(q => q.id === id);
-        const all = TRIP.quests.every(q => state.done[q.id]);
-        toast(all ? "🎉 全クエスト達成！おつかれさま！" : `クエスト達成！ +${q.pts}pt`);
-      }
+      renderBring();
     });
   });
 }
+$("bring-toggle").addEventListener("click", () => {
+  const body = $("bring-body");
+  const btn = $("bring-toggle");
+  const open = body.hidden;
+  body.hidden = !open;
+  btn.setAttribute("aria-expanded", String(open));
+});
 
 /* ---------- チップ ---------- */
 function renderMembers() {
@@ -836,6 +910,7 @@ function renderPlay() {
   renderTeams();
   renderVotes();
   renderCook();
+  applyPlayLocks();
 }
 function renderTeams() {
   const who = $("vote-who").value;
@@ -1030,14 +1105,14 @@ $("cook-reset").addEventListener("click", () => {
 });
 
 $("btn-play").addEventListener("click", () => {
-  if (!isPlayOpen()) { toast(`🔒 6/20にオープンするよ！${openCountdownText()}`); return; }
+  // あそびコーナー自体は常にオープン（料理王が開催中のため）
   renderPlay();
   show("screen-play");
   startCookTick();
 });
 $("btn-play-back").addEventListener("click", () => { renderMain(); show("screen-main"); });
 
-/* ---------- 企画のオープン日（6/20 0:00 〜） ---------- */
+/* ---------- 企画のオープン日（料理王以外は 6/20 0:00 にオープン） ---------- */
 const PLAY_OPEN = new Date(2026, 5, 20, 0, 0, 0); // 2026-06-20 00:00 ローカル時間
 function isPlayOpen() {
   return Date.now() >= PLAY_OPEN.getTime();
@@ -1051,23 +1126,14 @@ function openCountdownText() {
   const mins = Math.floor((ms % 3600000) / 60000);
   return `あと${hours}時間${mins}分`;
 }
-function renderPlayBanner() {
-  const banner = $("play-banner");
-  const btn = $("btn-play");
-  if (isPlayOpen()) {
-    banner.classList.remove("locked");
-    $("play-title").textContent = "🏆 Wカップ予想投票";
-    $("play-desc").innerHTML = "優勝チームをみんなで予想！ミニゲームもあるよ";
-    btn.textContent = "はじめる";
-    btn.disabled = false;
-  } else {
-    banner.classList.add("locked");
-    $("play-title").textContent = "🔒 Wカップ予想投票・ミニゲーム";
-    $("play-desc").innerHTML =
-      `COMING SOON … 6/20オープン予定<div class="countdown">${openCountdownText()}</div>`;
-    btn.textContent = "6/20〜";
-    btn.disabled = true;
-  }
+// Wカップ予想・ミニゲームのカミングスーン表示を反映（料理王はロックしない）
+function applyPlayLocks() {
+  const open = isPlayOpen();
+  const sub = open ? "" : `6/20オープン予定${openCountdownText() ? "（" + openCountdownText() + "）" : ""}`;
+  ["lock-wc", "lock-mg"].forEach(id => {
+    $(id).classList.toggle("locked", !open);
+  });
+  if (!open) { $("wc-sub").textContent = sub; $("mg-sub").textContent = sub; }
 }
 
 /* ---------- あそびコーナー：ミニゲーム ---------- */
@@ -1130,15 +1196,15 @@ function escapeHtml(s) {
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-/* ---------- 企画ロック中はカウントダウンを更新し、6/20に自動オープン ---------- */
+/* ---------- カミングスーンのカウントダウン更新＆6/20に自動オープン ---------- */
 let playWasLocked = !isPlayOpen();
 setInterval(() => {
-  if (!$("screen-main").classList.contains("active")) return;
+  if (!$("screen-play").classList.contains("active")) return;
   if (playWasLocked) {
-    renderPlayBanner();
+    applyPlayLocks();
     if (isPlayOpen()) {
       playWasLocked = false;
-      toast("🎉 Wカップ予想投票がオープンしました！");
+      toast("🎉 Wカップ予想・ミニゲームがオープンしました！");
     }
   }
 }, 30000);
