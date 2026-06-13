@@ -199,6 +199,50 @@
   .g-btn:active { opacity: .8; }
   .janken-btns { display: flex; gap: 10px; justify-content: center; }
   .g-btn.jk { font-size: 24px; padding: 12px 20px; }
+  .g-btn.ghost { background: #cfc7b8; }
+  .g-btn.full { display: block; width: 100%; margin-top: 10px; }
+
+  /* ---------- 料理王 ---------- */
+  .cook-tabs { display: flex; gap: 8px; margin: 4px 0 16px; }
+  .cook-tab {
+    flex: 1; padding: 11px 4px; font-size: 14px; font-weight: 700;
+    border: 1.5px solid var(--line); border-radius: 12px; background: var(--card);
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .cook-tab.sel { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .cook-timer-box { text-align: center; margin: 6px 0 18px; }
+  .cook-timer {
+    font-size: 46px; font-weight: 800; letter-spacing: .04em;
+    font-variant-numeric: tabular-nums; color: var(--ink);
+  }
+  .cook-timer.run { color: var(--green); }
+  .cook-timer.over { color: var(--accent); animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: .35; } }
+  .cook-timer-btns { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+  .cook-add { display: flex; gap: 8px; }
+  .cook-add select { flex: 0 0 38%; }
+  .cook-add input { flex: 1; }
+  .cook-add select, .cook-add input { padding: 11px 12px; font-size: 14px; }
+  #cook-entries { margin-top: 4px; }
+  .cook-entry {
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-top: 10px;
+    border: 1.5px solid var(--line); border-radius: 12px; background: var(--card);
+    cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; position: relative;
+  }
+  .cook-entry.voted { border-color: var(--accent); background: var(--accent-soft); }
+  .cook-entry.king { border-color: #e6b800; background: #fff8e1; }
+  .cook-entry .ce-rank { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; }
+  .cook-entry .ce-body { flex: 1; min-width: 0; }
+  .cook-entry .ce-dish { font-size: 15px; font-weight: 700; }
+  .cook-entry .ce-cook { font-size: 12px; color: var(--sub); margin-top: 2px; }
+  .cook-entry .ce-bar { height: 6px; background: var(--line); border-radius: 999px; margin-top: 8px; overflow: hidden; }
+  .cook-entry .ce-bar span { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width .4s; }
+  .cook-entry .ce-votes { font-size: 13px; font-weight: 700; color: var(--accent); flex-shrink: 0; }
+  .cook-entry .ce-del {
+    position: absolute; top: 6px; right: 8px; font-size: 16px; color: var(--sub);
+    background: none; border: none; cursor: pointer; line-height: 1;
+  }
+  .cook-empty { font-size: 13px; color: var(--sub); text-align: center; padding: 16px 0; }
 
   /* ---------- オープニング（スプラッシュ＆スライドショー） ---------- */
   .screen.full {
@@ -402,7 +446,7 @@
 <section id="screen-play" class="screen">
   <div class="greeting">
     <div class="hello">あそびコーナー ⚽</div>
-    <div class="name">Wカップ予想 ＆ ミニゲーム</div>
+    <div class="name">Wカップ予想・料理王・ミニゲーム</div>
   </div>
 
   <div class="card">
@@ -412,6 +456,36 @@
     <select id="vote-who"></select>
     <div class="team-grid" id="team-grid"></div>
     <div id="vote-result"></div>
+  </div>
+
+  <div class="card">
+    <h2>👑 料理王は誰だ？！</h2>
+    <p class="tip-note">男女別、制限時間<b>30分</b>で1品ずつ作って勝負！<br>みんなの投票で料理王を決めよう。</p>
+    <div class="cook-tabs">
+      <button class="cook-tab" data-d="men">♂ 男性版</button>
+      <button class="cook-tab" data-d="women">♀ 女性版</button>
+    </div>
+
+    <div class="cook-timer-box">
+      <div class="cook-timer" id="cook-timer">30:00</div>
+      <div class="cook-timer-btns">
+        <button class="g-btn" id="cook-start">スタート</button>
+        <button class="g-btn ghost" id="cook-reset">リセット</button>
+      </div>
+    </div>
+
+    <label>エントリー（作る人と料理名）</label>
+    <div class="cook-add">
+      <select id="cook-cook"></select>
+      <input type="text" id="cook-dish" placeholder="料理名（例）海鮮丼" autocomplete="off">
+    </div>
+    <button class="g-btn full" id="cook-add-btn">エントリーする</button>
+    <div id="cook-entries"></div>
+
+    <label>投票する人</label>
+    <select id="cook-voter"></select>
+    <p class="tip-note">下のエントリーをタップして1票！（1人1票・変更OK）</p>
+    <div id="cook-results"></div>
   </div>
 
   <div class="card">
@@ -761,6 +835,7 @@ function renderPlay() {
     .join("");
   renderTeams();
   renderVotes();
+  renderCook();
 }
 function renderTeams() {
   const who = $("vote-who").value;
@@ -798,10 +873,167 @@ function renderVotes() {
   }).join("");
 }
 $("vote-who").addEventListener("change", renderTeams);
+
+/* ---------- あそびコーナー：料理王は誰だ？！ ---------- */
+const COOK_MINUTES = 30;
+let cookDiv = "men";        // 表示中の部門
+let cookTick = null;        // タイマー更新用インターバル
+
+function cookData(d) {
+  state.cooking = state.cooking || {};
+  state.cooking[d] = state.cooking[d] || { entries: [], votes: {}, endAt: null };
+  return state.cooking[d];
+}
+
+function renderCook() {
+  // タブ
+  document.querySelectorAll(".cook-tab").forEach(t =>
+    t.classList.toggle("sel", t.dataset.d === cookDiv));
+  // 作る人・投票する人のセレクト（メンバーから）
+  const members = state.members || [];
+  const opts = members
+    .map(m => `<option ${m.name === state.name ? "selected" : ""}>${escapeHtml(m.name)}</option>`)
+    .join("");
+  $("cook-cook").innerHTML = opts || "<option value=''>メンバーを追加してね</option>";
+  $("cook-voter").innerHTML = opts || "<option value=''>メンバーを追加してね</option>";
+  renderCookTimer();
+  renderCookEntries();
+}
+
+function fmtTime(ms) {
+  if (ms < 0) ms = 0;
+  const s = Math.round(ms / 1000);
+  return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+}
+function renderCookTimer() {
+  const d = cookData(cookDiv);
+  const el = $("cook-timer");
+  el.classList.remove("run", "over");
+  if (d.endAt == null) {
+    el.textContent = COOK_MINUTES + ":00";
+  } else {
+    const left = d.endAt - Date.now();
+    if (left > 0) { el.textContent = fmtTime(left); el.classList.add("run"); }
+    else { el.textContent = "時間切れ！"; el.classList.add("over"); }
+  }
+}
+function startCookTick() {
+  clearInterval(cookTick);
+  cookTick = setInterval(() => {
+    if (!$("screen-play").classList.contains("active")) { clearInterval(cookTick); return; }
+    const d = cookData(cookDiv);
+    if (d.endAt == null) { clearInterval(cookTick); return; }
+    const left = d.endAt - Date.now();
+    renderCookTimer();
+    if (left <= 0) {
+      clearInterval(cookTick);
+      toast("⏰ 時間切れ！投票しよう！");
+    }
+  }, 1000);
+}
+
+function renderCookEntries() {
+  const d = cookData(cookDiv);
+  const voter = $("cook-voter").value;
+  const myVote = voter ? d.votes[voter] : null;
+  const counts = {};
+  d.entries.forEach(e => counts[e.id] = 0);
+  Object.values(d.votes).forEach(id => { if (id in counts) counts[id]++; });
+  const totalVotes = Object.values(counts).reduce((a, b) => a + b, 0);
+  const maxVotes = Math.max(0, ...Object.values(counts));
+
+  if (d.entries.length === 0) {
+    $("cook-entries").innerHTML = '<div class="cook-empty">まだエントリーがないよ。上から登録してね 🍳</div>';
+    return;
+  }
+  // 票数で並べ替え（多い順）
+  const sorted = [...d.entries].sort((a, b) => counts[b.id] - counts[a.id]);
+  $("cook-entries").innerHTML = sorted.map(e => {
+    const c = counts[e.id];
+    const isKing = totalVotes > 0 && c === maxVotes;
+    const pct = totalVotes > 0 ? Math.round(c / totalVotes * 100) : 0;
+    return `<div class="cook-entry ${myVote === e.id ? "voted" : ""} ${isKing ? "king" : ""}" data-id="${e.id}">
+      <button class="ce-del" data-del="${e.id}" title="削除">×</button>
+      <span class="ce-rank">${isKing ? "👑" : "🍽"}</span>
+      <div class="ce-body">
+        <div class="ce-dish">${escapeHtml(e.dish)}</div>
+        <div class="ce-cook">by ${escapeHtml(e.cook)}${myVote === e.id ? "　✓ あなたの1票" : ""}</div>
+        <div class="ce-bar"><span style="width:${pct}%"></span></div>
+      </div>
+      <span class="ce-votes">${c}票</span>
+    </div>`;
+  }).join("");
+
+  document.querySelectorAll("#cook-entries .cook-entry").forEach(el => {
+    el.addEventListener("click", e => {
+      if (e.target.closest(".ce-del")) return;
+      const v = $("cook-voter").value;
+      if (!v) { toast("投票する人を選んでね"); return; }
+      const id = el.dataset.id;
+      const data = cookData(cookDiv);
+      data.votes[v] = (data.votes[v] === id) ? undefined : id;
+      if (data.votes[v] === undefined) delete data.votes[v];
+      save();
+      renderCookEntries();
+      if (data.votes[v] === id) {
+        const ent = data.entries.find(x => x.id === id);
+        toast(`🗳 ${v} → 「${ent.dish}」に投票！`);
+      }
+    });
+  });
+  document.querySelectorAll("#cook-entries .ce-del").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const id = btn.dataset.del;
+      const data = cookData(cookDiv);
+      const ent = data.entries.find(x => x.id === id);
+      if (!confirm(`「${ent ? ent.dish : ""}」を削除する？`)) return;
+      data.entries = data.entries.filter(x => x.id !== id);
+      Object.keys(data.votes).forEach(k => { if (data.votes[k] === id) delete data.votes[k]; });
+      save();
+      renderCookEntries();
+    });
+  });
+}
+
+document.querySelectorAll(".cook-tab").forEach(tab => {
+  tab.addEventListener("click", () => { cookDiv = tab.dataset.d; renderCook(); startCookTick(); });
+});
+$("cook-voter").addEventListener("change", renderCookEntries);
+$("cook-add-btn").addEventListener("click", () => {
+  const cook = $("cook-cook").value;
+  const dish = $("cook-dish").value.trim();
+  if (!cook) { toast("メンバーを追加してね"); return; }
+  if (!dish) { toast("料理名を入力してね"); return; }
+  const d = cookData(cookDiv);
+  d.entries.push({ id: "c" + Date.now().toString(36), cook, dish });
+  save();
+  $("cook-dish").value = "";
+  renderCookEntries();
+  toast(`🍳 ${cook}「${dish}」エントリー！`);
+});
+$("cook-dish").addEventListener("keydown", e => { if (e.key === "Enter") $("cook-add-btn").click(); });
+$("cook-start").addEventListener("click", () => {
+  const d = cookData(cookDiv);
+  d.endAt = Date.now() + COOK_MINUTES * 60 * 1000;
+  save();
+  renderCookTimer();
+  startCookTick();
+  toast("⏱ 30分スタート！料理開始！");
+});
+$("cook-reset").addEventListener("click", () => {
+  const d = cookData(cookDiv);
+  d.endAt = null;
+  save();
+  clearInterval(cookTick);
+  renderCookTimer();
+});
+
 $("btn-play").addEventListener("click", () => {
   if (!isPlayOpen()) { toast(`🔒 6/20にオープンするよ！${openCountdownText()}`); return; }
   renderPlay();
   show("screen-play");
+  startCookTick();
 });
 $("btn-play-back").addEventListener("click", () => { renderMain(); show("screen-main"); });
 
