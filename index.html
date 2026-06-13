@@ -588,6 +588,7 @@
 
 <div id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* =====================================================
    旅のデータ（ここを書き換えれば内容を変更できます）
@@ -649,6 +650,108 @@ const KEY = "trip-app-v1";
 
 const state = JSON.parse(localStorage.getItem(KEY) || "{}");
 const save = () => localStorage.setItem(KEY, JSON.stringify(state));
+
+/* =====================================================
+   クラウド同期（Supabase）：投票やメンバーを全員のスマホで共有
+===================================================== */
+const SUPABASE_URL = "https://lvrhswarmmivrwjhttph.supabase.co";
+const SUPABASE_KEY = "sb_publishable_NPXyA1819du5r_A2bckm5w_slnSXWr8";
+let sb = null;
+try {
+  if (window.supabase) sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+} catch (e) { console.warn("supabase init failed", e); }
+
+// 失敗してもUIを壊さないラッパー
+async function cloud(fn) {
+  if (!sb) return null;
+  try { return await fn(sb); }
+  catch (e) { console.warn("cloud error", e); return null; }
+}
+
+// 現在表示中の画面を再描画
+function rerenderActive() {
+  if ($("screen-main").classList.contains("active")) {
+    if (state.members) { renderMembers(); renderMemberCards(); }
+  }
+  if ($("screen-play").classList.contains("active")) {
+    renderTeams(); renderVotes(); renderCook();
+  }
+}
+
+// クラウドから全データを読み込んでローカルstateへ反映
+let cloudReloadTimer = null;
+function cloudReloadSoon() {
+  clearTimeout(cloudReloadTimer);
+  cloudReloadTimer = setTimeout(cloudLoadAll, 250);
+}
+async function cloudLoadAll() {
+  if (!sb) return;
+  const res = await cloud(async s => Promise.all([
+    s.from("members").select("*"),
+    s.from("wc_votes").select("*"),
+    s.from("cook_entries").select("*"),
+    s.from("cook_votes").select("*"),
+    s.from("cook_timer").select("*")
+  ]));
+  if (!res) return;
+  const [mem, wc, ce, cv, ct] = res;
+  if (mem && mem.data) {
+    state.members = mem.data.map(r => ({ name: r.name, chips: r.chips || 0 }));
+    // 自分がまだ反映されていなければ表示上は残す
+    if (state.name && !state.members.some(m => m.name === state.name)) {
+      state.members.unshift({ name: state.name, chips: 0 });
+    }
+    state.profiles = state.profiles || {};
+    mem.data.forEach(r => {
+      if (r.mbti || r.origin || r.job)
+        state.profiles[r.name] = { mbti: r.mbti, from: r.origin, job: r.job };
+    });
+  }
+  if (wc && wc.data) {
+    state.wcVotes = {};
+    wc.data.forEach(r => state.wcVotes[r.voter] = r.team);
+  }
+  state.cooking = state.cooking || {};
+  ["men", "women"].forEach(d => state.cooking[d] = { entries: [], votes: {}, endAt: null });
+  if (ce && ce.data) ce.data.forEach(r => {
+    if (state.cooking[r.division]) state.cooking[r.division].entries.push({ id: r.id, cook: r.cook, dish: r.dish });
+  });
+  if (cv && cv.data) cv.data.forEach(r => {
+    if (state.cooking[r.division]) state.cooking[r.division].votes[r.voter] = r.entry_id;
+  });
+  if (ct && ct.data) ct.data.forEach(r => {
+    if (state.cooking[r.division]) state.cooking[r.division].endAt = r.end_at ? new Date(r.end_at).getTime() : null;
+  });
+  save();
+  rerenderActive();
+}
+
+// 書き込みヘルパー
+const cloudUpsertMember = (name, fields = {}) =>
+  cloud(s => s.from("members").upsert({ name, ...fields }, { onConflict: "name" }));
+const cloudSetChips = (name, chips) =>
+  cloud(s => s.from("members").upsert({ name, chips }, { onConflict: "name" }));
+const cloudSetWcVote = (voter, team) =>
+  cloud(s => s.from("wc_votes").upsert({ voter, team, updated_at: new Date().toISOString() }, { onConflict: "voter" }));
+const cloudDelWcVote = (voter) =>
+  cloud(s => s.from("wc_votes").delete().eq("voter", voter));
+const cloudAddEntry = (e) =>
+  cloud(s => s.from("cook_entries").insert({ id: e.id, division: e.division, cook: e.cook, dish: e.dish }));
+const cloudDelEntry = (id) =>
+  cloud(async s => { await s.from("cook_votes").delete().eq("entry_id", id); return s.from("cook_entries").delete().eq("id", id); });
+const cloudSetCookVote = (voter, division, entry_id) =>
+  cloud(s => s.from("cook_votes").upsert({ voter, division, entry_id, updated_at: new Date().toISOString() }, { onConflict: "voter,division" }));
+const cloudDelCookVote = (voter, division) =>
+  cloud(s => s.from("cook_votes").delete().eq("voter", voter).eq("division", division));
+const cloudSetTimer = (division, endMs) =>
+  cloud(s => s.from("cook_timer").upsert({ division, end_at: endMs ? new Date(endMs).toISOString() : null }, { onConflict: "division" }));
+
+// リアルタイム購読：誰かが変更したら自動で再読込
+if (sb) {
+  sb.channel("trip-room")
+    .on("postgres_changes", { event: "*", schema: "public" }, cloudReloadSoon)
+    .subscribe();
+}
 
 function show(id) {
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
@@ -735,6 +838,15 @@ function renderMain() {
   }
   renderMembers();
   initBanner();
+
+  // クラウド：自分を登録して最新データを取得
+  const myProfile = (state.profiles && state.profiles[state.name]) || {};
+  cloudUpsertMember(state.name, {
+    mbti: myProfile.mbti || state.mbti || null,
+    origin: myProfile.from || state.from || null,
+    job: myProfile.job || state.job || null
+  });
+  cloudLoadAll();
 }
 
 /* ---------- 持ち物リスト（チェック式） ---------- */
@@ -786,6 +898,7 @@ function renderMembers() {
       member.chips = Math.max(0, member.chips + Number(btn.dataset.d));
       save();
       renderMembers();
+      cloudSetChips(member.name, member.chips);
     });
   });
   renderMemberCards();
@@ -802,13 +915,14 @@ $("btn-member").addEventListener("click", () => {
   save();
   $("input-member").value = "";
   renderMembers();
+  cloudUpsertMember(name, { chips: 0 });
 });
 $("input-member").addEventListener("keydown", e => {
   if (e.key === "Enter") $("btn-member").click();
 });
 
 $("btn-reset").addEventListener("click", () => {
-  if (confirm("入力した情報とクエストの進捗をリセットします。よろしいですか？")) {
+  if (confirm("この端末の入力情報をリセットします。（みんなの投票データは消えません）よろしいですか？")) {
     localStorage.removeItem(KEY);
     location.reload();
   }
@@ -928,6 +1042,7 @@ function renderTeams() {
       save();
       renderTeams();
       renderVotes();
+      cloudSetWcVote(w, el.dataset.team);
       toast(`⚽ ${w} は ${el.dataset.team} に投票！`);
     });
   });
@@ -964,13 +1079,15 @@ function renderCook() {
   // タブ
   document.querySelectorAll(".cook-tab").forEach(t =>
     t.classList.toggle("sel", t.dataset.d === cookDiv));
-  // 作る人・投票する人のセレクト（メンバーから）
+  // 作る人・投票する人のセレクト（メンバーから）。選択中の値は維持
   const members = state.members || [];
-  const opts = members
-    .map(m => `<option ${m.name === state.name ? "selected" : ""}>${escapeHtml(m.name)}</option>`)
-    .join("");
-  $("cook-cook").innerHTML = opts || "<option value=''>メンバーを追加してね</option>";
-  $("cook-voter").innerHTML = opts || "<option value=''>メンバーを追加してね</option>";
+  const prevCook = $("cook-cook").value;
+  const prevVoter = $("cook-voter").value;
+  const buildOpts = (sel) => members.length
+    ? members.map(m => `<option ${m.name === sel ? "selected" : ""}>${escapeHtml(m.name)}</option>`).join("")
+    : "<option value=''>メンバーを追加してね</option>";
+  $("cook-cook").innerHTML = buildOpts(members.some(m => m.name === prevCook) ? prevCook : state.name);
+  $("cook-voter").innerHTML = buildOpts(members.some(m => m.name === prevVoter) ? prevVoter : state.name);
   renderCookTimer();
   renderCookEntries();
 }
@@ -1045,12 +1162,17 @@ function renderCookEntries() {
       const v = $("cook-voter").value;
       if (!v) { toast("投票する人を選んでね"); return; }
       const id = el.dataset.id;
-      const data = cookData(cookDiv);
-      data.votes[v] = (data.votes[v] === id) ? undefined : id;
+      const div = cookDiv;
+      const data = cookData(div);
+      const removing = data.votes[v] === id;
+      data.votes[v] = removing ? undefined : id;
       if (data.votes[v] === undefined) delete data.votes[v];
       save();
       renderCookEntries();
-      if (data.votes[v] === id) {
+      if (removing) {
+        cloudDelCookVote(v, div);
+      } else {
+        cloudSetCookVote(v, div, id);
         const ent = data.entries.find(x => x.id === id);
         toast(`🗳 ${v} → 「${ent.dish}」に投票！`);
       }
@@ -1067,6 +1189,7 @@ function renderCookEntries() {
       Object.keys(data.votes).forEach(k => { if (data.votes[k] === id) delete data.votes[k]; });
       save();
       renderCookEntries();
+      cloudDelEntry(id);
     });
   });
 }
@@ -1081,10 +1204,12 @@ $("cook-add-btn").addEventListener("click", () => {
   if (!cook) { toast("メンバーを追加してね"); return; }
   if (!dish) { toast("料理名を入力してね"); return; }
   const d = cookData(cookDiv);
-  d.entries.push({ id: "c" + Date.now().toString(36), cook, dish });
+  const entry = { id: "c" + Date.now().toString(36), cook, dish };
+  d.entries.push(entry);
   save();
   $("cook-dish").value = "";
   renderCookEntries();
+  cloudAddEntry({ ...entry, division: cookDiv });
   toast(`🍳 ${cook}「${dish}」エントリー！`);
 });
 $("cook-dish").addEventListener("keydown", e => { if (e.key === "Enter") $("cook-add-btn").click(); });
@@ -1094,6 +1219,7 @@ $("cook-start").addEventListener("click", () => {
   save();
   renderCookTimer();
   startCookTick();
+  cloudSetTimer(cookDiv, d.endAt);
   toast("⏱ 30分スタート！料理開始！");
 });
 $("cook-reset").addEventListener("click", () => {
@@ -1102,6 +1228,7 @@ $("cook-reset").addEventListener("click", () => {
   save();
   clearInterval(cookTick);
   renderCookTimer();
+  cloudSetTimer(cookDiv, null);
 });
 
 $("btn-play").addEventListener("click", () => {
@@ -1109,6 +1236,7 @@ $("btn-play").addEventListener("click", () => {
   renderPlay();
   show("screen-play");
   startCookTick();
+  cloudLoadAll();
 });
 $("btn-play-back").addEventListener("click", () => { renderMain(); show("screen-main"); });
 
