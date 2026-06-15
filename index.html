@@ -43,6 +43,13 @@
   }
   input[type=text]:focus, select:focus { border-color: var(--accent); }
 
+  .diag-link {
+    display: inline-block; margin-top: 10px; font-size: 13px; font-weight: 600;
+    color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent);
+    padding-bottom: 1px;
+  }
+  .diag-link:active { opacity: .7; }
+
   .btn {
     display: block; width: 100%; margin-top: 28px; padding: 16px;
     font-size: 16px; font-weight: 700; letter-spacing: .1em;
@@ -398,7 +405,7 @@
     <h1>3つの質問</h1>
     <p>みんなに紹介するときに使うよ</p>
   </div>
-  <label for="input-mbti">MBTIは？</label>
+  <label for="input-mbti">ラブタイプは？</label>
   <select id="input-mbti">
     <option value="" selected disabled>選んでください</option>
     <option>INTJ</option><option>INTP</option><option>ENTJ</option><option>ENTP</option>
@@ -407,6 +414,9 @@
     <option>ISTP</option><option>ISFP</option><option>ESTP</option><option>ESFP</option>
     <option value="わからない">わからない</option>
   </select>
+  <a class="diag-link" href="https://lovetypetest.com/" target="_blank" rel="noopener">
+    まだの方は… ラブタイプ診断を行う ↗︎
+  </a>
   <label for="input-from">出身は？</label>
   <input type="text" id="input-from" placeholder="例）大阪" autocomplete="off">
   <label for="input-job">仕事は？</label>
@@ -803,7 +813,7 @@ $("btn-questions").addEventListener("click", () => {
 function renderMain() {
   $("disp-name").textContent = state.name + " さん";
   $("disp-tags").innerHTML = [
-    "MBTI: " + state.mbti,
+    "ラブタイプ: " + state.mbti,
     "出身: " + state.from,
     "仕事: " + state.job
   ].map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("");
@@ -996,7 +1006,7 @@ function renderMemberCards() {
     const t = v ? TEAMS.find(t => t.name === v) : null;
     const hue = ([...m.name][0].codePointAt(0) * 47) % 360;
     const tags = p
-      ? ["MBTI: " + p.mbti, "出身: " + p.from, "仕事: " + p.job]
+      ? ["ラブタイプ: " + p.mbti, "出身: " + p.from, "仕事: " + p.job]
           .map(x => `<span class="tag">${escapeHtml(x)}</span>`).join("")
       : '<span class="tag">プロフィール未登録</span>';
     return `<div class="mem-card">
