@@ -50,6 +50,16 @@
   }
   .diag-link:active { opacity: .7; }
 
+  /* ---------- きゅんポイント等のチップ選択 ---------- */
+  .chip-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .chip-opt {
+    font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 999px;
+    border: 1.5px solid var(--line); background: var(--card); color: var(--ink);
+    cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+    transition: all .15s;
+  }
+  .chip-opt.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+
   .btn {
     display: block; width: 100%; margin-top: 28px; padding: 16px;
     font-size: 16px; font-weight: 700; letter-spacing: .1em;
@@ -430,14 +440,14 @@
 
 <!-- ⓪' オープニング：スライドショー -->
 
-<!-- ① 名前入力 -->
+<!-- ① ニックネーム入力 -->
 <section id="screen-name" class="screen">
   <div class="hero">
     <span class="emoji">🚗</span>
     <h1>ようこそ、旅のしおりへ</h1>
     <p>はじめに、あなたのことを<br>教えてください</p>
   </div>
-  <label for="input-name">名前を入力してください</label>
+  <label for="input-name">ニックネーム</label>
   <input type="text" id="input-name" placeholder="例）たろう" autocomplete="off">
   <button class="btn" id="btn-name" disabled>つぎへ</button>
 </section>
@@ -446,11 +456,12 @@
 <section id="screen-questions" class="screen">
   <div class="hero">
     <span class="emoji">📝</span>
-    <h1>3つの質問</h1>
+    <h1>プロフィール</h1>
     <p>みんなに紹介するときに使うよ</p>
   </div>
-  <label for="input-mbti">ラブタイプは？</label>
-  <select id="input-mbti">
+
+  <label for="input-lovetype">ラブタイプは？</label>
+  <select id="input-lovetype">
     <option value="" selected disabled>選んでください</option>
     <option>INTJ</option><option>INTP</option><option>ENTJ</option><option>ENTP</option>
     <option>INFJ</option><option>INFP</option><option>ENFJ</option><option>ENFP</option>
@@ -461,10 +472,23 @@
   <a class="diag-link" href="https://lovetypetest.com/" target="_blank" rel="noopener">
     まだの方は… ラブタイプ診断を行う ↗︎
   </a>
-  <label for="input-from">出身は？</label>
-  <input type="text" id="input-from" placeholder="例）大阪" autocomplete="off">
-  <label for="input-job">仕事は？</label>
-  <input type="text" id="input-job" placeholder="例）エンジニア" autocomplete="off">
+
+  <label for="input-mbti">MBTIは？</label>
+  <select id="input-mbti">
+    <option value="" selected disabled>選んでください</option>
+    <option>INTJ</option><option>INTP</option><option>ENTJ</option><option>ENTP</option>
+    <option>INFJ</option><option>INFP</option><option>ENFJ</option><option>ENFP</option>
+    <option>ISTJ</option><option>ISFJ</option><option>ESTJ</option><option>ESFJ</option>
+    <option>ISTP</option><option>ISFP</option><option>ESTP</option><option>ESFP</option>
+    <option value="わからない">わからない</option>
+  </select>
+
+  <label for="input-ideal">理想のデートは？</label>
+  <input type="text" id="input-ideal" placeholder="例）水族館デート" autocomplete="off">
+
+  <label>きゅんポイントは？（複数選択OK）</label>
+  <div class="chip-group" id="kyun-group"></div>
+
   <button class="btn" id="btn-questions" disabled>しおりを見る</button>
 </section>
 
@@ -774,8 +798,11 @@ async function cloudLoadAll() {
     }
     state.profiles = state.profiles || {};
     mem.data.forEach(r => {
-      if (r.mbti || r.origin || r.job)
-        state.profiles[r.name] = { mbti: r.mbti, from: r.origin, job: r.job };
+      if (r.lovetype || r.mbti || r.ideal_date || r.kyun)
+        state.profiles[r.name] = {
+          lovetype: r.lovetype, mbti: r.mbti, idealDate: r.ideal_date,
+          kyun: Array.isArray(r.kyun) ? r.kyun : []
+        };
     });
   }
   if (wc && wc.data) {
@@ -1040,33 +1067,68 @@ function toast(msg) {
   t._timer = setTimeout(() => t.classList.remove("show"), 1800);
 }
 
-/* ---------- ① 名前入力 ---------- */
+/* ---------- ① ニックネーム入力 ---------- */
 $("input-name").addEventListener("input", e => {
   $("btn-name").disabled = e.target.value.trim() === "";
 });
 $("btn-name").addEventListener("click", () => {
   state.name = $("input-name").value.trim();
   save();
+  fillQuestions();
   show("screen-questions");
 });
 
-/* ---------- ② 質問 ---------- */
+/* ---------- ② 質問（プロフィール） ---------- */
+const KYUN = [
+  "イケボ", "高身長", "面白い", "誠実", "料理上手", "シゴデキ", "頼りになる",
+  "おしゃれ", "面倒見がいい", "甘え上手", "多趣味", "博識", "努力家"
+];
+let kyunSel = [];
+
+function renderKyunOptions() {
+  $("kyun-group").innerHTML = KYUN.map(k =>
+    `<span class="chip-opt ${kyunSel.includes(k) ? "on" : ""}" data-k="${escapeHtml(k)}">${escapeHtml(k)}</span>`
+  ).join("");
+  $("kyun-group").querySelectorAll(".chip-opt").forEach(el => {
+    el.addEventListener("click", () => {
+      const k = el.dataset.k;
+      if (kyunSel.includes(k)) kyunSel = kyunSel.filter(x => x !== k);
+      else kyunSel.push(k);
+      el.classList.toggle("on");
+    });
+  });
+}
+
+// 既存の入力値をフォームに反映（再編集や戻ったとき用）
+function fillQuestions() {
+  const p = (state.profiles && state.profiles[state.name]) || {};
+  $("input-lovetype").value = p.lovetype || state.lovetype || "";
+  $("input-mbti").value = p.mbti || state.mbti || "";
+  $("input-ideal").value = p.idealDate || state.idealDate || "";
+  kyunSel = Array.isArray(p.kyun) ? [...p.kyun] : (Array.isArray(state.kyun) ? [...state.kyun] : []);
+  renderKyunOptions();
+  validateQuestions();
+}
+
 function validateQuestions() {
   $("btn-questions").disabled = !(
+    $("input-lovetype").value &&
     $("input-mbti").value &&
-    $("input-from").value.trim() &&
-    $("input-job").value.trim()
+    $("input-ideal").value.trim()
   );
 }
-["input-mbti", "input-from", "input-job"].forEach(id =>
+["input-lovetype", "input-mbti", "input-ideal"].forEach(id =>
   $(id).addEventListener("input", validateQuestions)
 );
 $("btn-questions").addEventListener("click", () => {
+  state.lovetype = $("input-lovetype").value;
   state.mbti = $("input-mbti").value;
-  state.from = $("input-from").value.trim();
-  state.job  = $("input-job").value.trim();
+  state.idealDate = $("input-ideal").value.trim();
+  state.kyun = [...kyunSel];
   state.profiles = state.profiles || {};
-  state.profiles[state.name] = { mbti: state.mbti, from: state.from, job: state.job };
+  state.profiles[state.name] = {
+    lovetype: state.lovetype, mbti: state.mbti, idealDate: state.idealDate, kyun: state.kyun
+  };
   save();
   renderMain();
   show("screen-main");
@@ -1076,9 +1138,10 @@ $("btn-questions").addEventListener("click", () => {
 function renderMain() {
   $("disp-name").textContent = state.name + " さん";
   $("disp-tags").innerHTML = [
-    "ラブタイプ: " + state.mbti,
-    "出身: " + state.from,
-    "仕事: " + state.job
+    "💘 ラブタイプ: " + (state.lovetype || "-"),
+    "🧠 MBTI: " + (state.mbti || "-"),
+    "💑 理想のデート: " + (state.idealDate || "-"),
+    ...((state.kyun || []).map(k => "💗 " + k))
   ].map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("");
 
   $("inn-name").textContent = TRIP.inn.name;
@@ -1116,9 +1179,10 @@ function renderMain() {
   // クラウド：自分を登録して最新データを取得
   const myProfile = (state.profiles && state.profiles[state.name]) || {};
   cloudUpsertMember(state.name, {
+    lovetype: myProfile.lovetype || state.lovetype || null,
     mbti: myProfile.mbti || state.mbti || null,
-    origin: myProfile.from || state.from || null,
-    job: myProfile.job || state.job || null
+    ideal_date: myProfile.idealDate || state.idealDate || null,
+    kyun: myProfile.kyun || state.kyun || []
   });
   cloudLoadAll();
 }
@@ -1212,10 +1276,11 @@ const SLIDES = [
 ];
 
 function endOpening() {
-  if (state.name && state.mbti && state.from && state.job) {
+  if (state.name && state.lovetype && state.mbti && state.idealDate) {
     renderMain();
     show("screen-main");
   } else if (state.name) {
+    fillQuestions();
     show("screen-questions");
   } else {
     show("screen-name");
@@ -1270,8 +1335,12 @@ function renderMemberCards() {
     const t = v ? TEAMS.find(t => t.name === v) : null;
     const hue = ([...m.name][0].codePointAt(0) * 47) % 360;
     const tags = p
-      ? ["ラブタイプ: " + p.mbti, "出身: " + p.from, "仕事: " + p.job]
-          .map(x => `<span class="tag">${escapeHtml(x)}</span>`).join("")
+      ? [
+          "💘 ラブタイプ: " + (p.lovetype || "-"),
+          "🧠 MBTI: " + (p.mbti || "-"),
+          "💑 理想のデート: " + (p.idealDate || "-"),
+          ...((p.kyun || []).map(k => "💗 " + k))
+        ].map(x => `<span class="tag">${escapeHtml(x)}</span>`).join("")
       : '<span class="tag">プロフィール未登録</span>';
     return `<div class="mem-card">
       <div class="mc-avatar" style="background:hsl(${hue},55%,62%)">${escapeHtml([...m.name][0])}</div>
