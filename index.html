@@ -348,6 +348,50 @@
   .bring.on .b-text { color: var(--sub); text-decoration: line-through; }
   .bring .b-note { font-size: 11px; color: var(--sub); }
 
+  /* ---------- タイムライン ---------- */
+  .tl-compose { display: flex; flex-direction: column; gap: 10px; margin-bottom: 6px; }
+  .tl-pick {
+    display: flex; align-items: center; justify-content: center; position: relative;
+    min-height: 56px; border: 1.5px dashed var(--line); border-radius: 12px;
+    background: #fcfbf8; color: var(--accent); font-size: 14px; font-weight: 700;
+    cursor: pointer; overflow: hidden; -webkit-tap-highlight-color: transparent;
+  }
+  .tl-preview { width: 100%; max-height: 260px; object-fit: cover; display: block; }
+  .tl-compose input[type=text] { padding: 12px 14px; font-size: 15px; }
+  .tl-share {
+    padding: 13px; border: none; border-radius: 999px; background: var(--accent);
+    color: #fff; font-size: 15px; font-weight: 700; letter-spacing: .08em; cursor: pointer;
+  }
+  .tl-share:disabled { opacity: .4; }
+  .tl-share:active { opacity: .85; }
+
+  .tl-post {
+    border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+    margin-top: 16px; background: #fffdf9;
+  }
+  .tl-head {
+    display: flex; align-items: center; gap: 8px; padding: 12px 14px 10px;
+  }
+  .tl-avatar {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700; color: #fff;
+  }
+  .tl-author { font-size: 14px; font-weight: 700; flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tl-time { font-size: 11px; color: var(--sub); flex-shrink: 0; }
+  .tl-imgwrap { background: #000; }
+  .tl-img { width: 100%; display: block; }
+  .tl-cap { padding: 12px 14px; font-size: 14px; line-height: 1.6; }
+  .tl-actions { display: flex; gap: 8px; padding: 0 14px 14px; }
+  .tl-act {
+    flex: 1; padding: 9px; border: 1.5px solid var(--line); border-radius: 10px;
+    background: var(--card); font-size: 13px; font-weight: 700; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tl-act.save { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+  .tl-empty { font-size: 13px; color: var(--sub); text-align: center; padding: 20px 0 4px; }
+
   /* ---------- ミッション予告 ---------- */
   .mission-card { background: linear-gradient(135deg, #fff3e6, #ffe7d1); }
   .mission-card h2 { color: var(--accent); }
@@ -452,6 +496,21 @@
     <span class="gift">🎁</span>
     <p>この旅には様々なミッションが用意されています。<br>
        ミッションクリアで素敵な景品も。<br><b>お楽しみに！</b></p>
+  </div>
+
+  <div class="card">
+    <h2>📸 タイムライン</h2>
+    <p class="tip-note">旅の思い出を一言そえてシェアしよう。みんなのスマホに届くよ📡</p>
+    <div class="tl-compose">
+      <label class="tl-pick" id="tl-pick">
+        <input type="file" id="tl-file" accept="image/*" hidden>
+        <span id="tl-pick-label">＋ 写真を選ぶ</span>
+        <img id="tl-preview" class="tl-preview" alt="" hidden>
+      </label>
+      <input type="text" id="tl-caption" placeholder="ひとこと添えて…" maxlength="80" autocomplete="off">
+      <button class="tl-share" id="tl-post" disabled>シェアする</button>
+    </div>
+    <div id="tl-feed"></div>
   </div>
 
   <div class="card">
@@ -686,6 +745,7 @@ function rerenderActive() {
   if ($("screen-play").classList.contains("active")) {
     renderTeams(); renderVotes(); renderCook();
   }
+  if (state.posts) renderFeed();
 }
 
 // クラウドから全データを読み込んでローカルstateへ反映
@@ -701,10 +761,11 @@ async function cloudLoadAll() {
     s.from("wc_votes").select("*"),
     s.from("cook_entries").select("*"),
     s.from("cook_votes").select("*"),
-    s.from("cook_timer").select("*")
+    s.from("cook_timer").select("*"),
+    s.from("posts").select("*").order("created_at", { ascending: false })
   ]));
   if (!res) return;
-  const [mem, wc, ce, cv, ct] = res;
+  const [mem, wc, ce, cv, ct, ps] = res;
   if (mem && mem.data) {
     state.members = mem.data.map(r => ({ name: r.name, chips: r.chips || 0 }));
     // 自分がまだ反映されていなければ表示上は残す
@@ -732,6 +793,12 @@ async function cloudLoadAll() {
   if (ct && ct.data) ct.data.forEach(r => {
     if (state.cooking[r.division]) state.cooking[r.division].endAt = r.end_at ? new Date(r.end_at).getTime() : null;
   });
+  if (ps && ps.data) {
+    state.posts = ps.data.map(r => ({
+      id: r.id, author: r.author, caption: r.caption,
+      url: r.image_url, path: r.storage_path, at: r.created_at
+    }));
+  }
   save();
   rerenderActive();
 }
@@ -761,6 +828,202 @@ if (sb) {
   sb.channel("trip-room")
     .on("postgres_changes", { event: "*", schema: "public" }, cloudReloadSoon)
     .subscribe();
+}
+
+/* =====================================================
+   タイムライン（写真＋ひとことをシェア／保存）
+===================================================== */
+let tlBlob = null; // 投稿待ちの画像（圧縮済み）
+
+// 画像を縮小してJPEG Blobに変換（アップロードを軽く）
+function fileToBlob(file, maxDim = 1400, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.naturalWidth, h = img.naturalHeight;
+      const scale = Math.min(1, maxDim / Math.max(w, h));
+      w = Math.round(w * scale); h = Math.round(h * scale);
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      c.getContext("2d").drawImage(img, 0, 0, w, h);
+      c.toBlob(b => b ? resolve(b) : reject(new Error("toBlob失敗")), "image/jpeg", quality);
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+function timeAgo(iso) {
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return "たった今";
+  if (s < 3600) return Math.floor(s / 60) + "分前";
+  if (s < 86400) return Math.floor(s / 3600) + "時間前";
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function renderFeed() {
+  const feed = $("tl-feed");
+  if (!feed) return;
+  const posts = state.posts || [];
+  if (posts.length === 0) {
+    feed.innerHTML = '<div class="tl-empty">まだ投稿がないよ。最初の1枚をシェアしよう📷</div>';
+    return;
+  }
+  feed.innerHTML = posts.map(p => {
+    const hue = ([...(p.author || "?")][0].codePointAt(0) * 47) % 360;
+    return `<div class="tl-post" data-id="${p.id}">
+      <div class="tl-head">
+        <span class="tl-avatar" style="background:hsl(${hue},55%,62%)">${escapeHtml([...(p.author || "?")][0])}</span>
+        <span class="tl-author">${escapeHtml(p.author || "")}</span>
+        <span class="tl-time">${timeAgo(p.at)}</span>
+      </div>
+      <div class="tl-imgwrap"><img class="tl-img" src="${escapeHtml(p.url)}" alt="" loading="lazy"></div>
+      ${p.caption ? `<div class="tl-cap">${escapeHtml(p.caption)}</div>` : ""}
+      <div class="tl-actions">
+        <button class="tl-act save" data-save="${p.id}">⬇︎ 保存</button>
+        ${p.author === state.name ? `<button class="tl-act" data-del="${p.id}">削除</button>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+
+  feed.querySelectorAll("[data-save]").forEach(b =>
+    b.addEventListener("click", () => {
+      const p = (state.posts || []).find(x => x.id === b.dataset.save);
+      if (p) savePost(p);
+    }));
+  feed.querySelectorAll("[data-del]").forEach(b =>
+    b.addEventListener("click", () => deletePost(b.dataset.del)));
+}
+
+// 写真選択 → プレビュー
+$("tl-file").addEventListener("change", async e => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  $("tl-pick-label").textContent = "読み込み中…";
+  try {
+    tlBlob = await fileToBlob(file);
+    const prev = $("tl-preview");
+    prev.src = URL.createObjectURL(tlBlob);
+    prev.hidden = false;
+    $("tl-pick-label").hidden = true;
+    $("tl-post").disabled = false;
+  } catch (err) {
+    console.warn(err);
+    toast("画像を読み込めませんでした");
+    $("tl-pick-label").textContent = "＋ 写真を選ぶ";
+  }
+});
+
+function resetComposer() {
+  tlBlob = null;
+  $("tl-file").value = "";
+  const prev = $("tl-preview");
+  prev.hidden = true; prev.removeAttribute("src");
+  $("tl-pick-label").hidden = false;
+  $("tl-pick-label").textContent = "＋ 写真を選ぶ";
+  $("tl-caption").value = "";
+  $("tl-post").disabled = true;
+}
+
+// 投稿
+$("tl-post").addEventListener("click", async () => {
+  if (!tlBlob) return;
+  if (!state.name) { toast("先に名前を登録してね"); return; }
+  if (!sb) { toast("通信できないため投稿できません"); return; }
+  const btn = $("tl-post");
+  btn.disabled = true; btn.textContent = "シェア中…";
+  try {
+    const path = `p/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+    const up = await sb.storage.from("photos").upload(path, tlBlob, { contentType: "image/jpeg" });
+    if (up.error) throw up.error;
+    const url = sb.storage.from("photos").getPublicUrl(path).data.publicUrl;
+    const post = {
+      id: "t" + Date.now().toString(36),
+      author: state.name,
+      caption: $("tl-caption").value.trim(),
+      image_url: url,
+      storage_path: path
+    };
+    const ins = await sb.from("posts").insert(post);
+    if (ins.error) throw ins.error;
+    resetComposer();
+    toast("📸 シェアしました！");
+    cloudLoadAll();
+  } catch (err) {
+    console.warn(err);
+    toast("投稿に失敗しました…もう一度お試しください");
+  } finally {
+    btn.textContent = "シェアする";
+    btn.disabled = !tlBlob;
+  }
+});
+
+// 削除（自分の投稿のみ）
+async function deletePost(id) {
+  const p = (state.posts || []).find(x => x.id === id);
+  if (!p) return;
+  if (!confirm("この投稿を削除する？")) return;
+  await cloud(s => s.from("posts").delete().eq("id", id));
+  if (p.path) await cloud(s => s.storage.from("photos").remove([p.path]));
+  state.posts = (state.posts || []).filter(x => x.id !== id);
+  save();
+  renderFeed();
+}
+
+// 写真＋ひとことを1枚の画像にして保存（端末にダウンロード）
+async function savePost(p) {
+  try {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    await new Promise((res, rej) => {
+      img.onload = res; img.onerror = rej;
+      img.src = p.url + (p.url.includes("?") ? "&" : "?") + "cors=1";
+    });
+    const W = img.naturalWidth, H = img.naturalHeight;
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const ctx = c.getContext("2d");
+    ctx.drawImage(img, 0, 0, W, H);
+    if (p.caption) {
+      const pad = Math.round(W * 0.04);
+      const fs = Math.max(22, Math.round(W * 0.045));
+      const barH = fs * 2.4;
+      const g = ctx.createLinearGradient(0, H - barH * 1.6, 0, H);
+      g.addColorStop(0, "rgba(0,0,0,0)");
+      g.addColorStop(1, "rgba(0,0,0,0.65)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, H - barH * 1.6, W, barH * 1.6);
+      ctx.fillStyle = "#fff";
+      ctx.font = `700 ${fs}px sans-serif`;
+      ctx.textBaseline = "bottom";
+      // 1行に収める（はみ出しは…で省略）
+      let text = p.caption;
+      while (ctx.measureText(text).width > W - pad * 2 && text.length > 1) {
+        text = text.slice(0, -2) + "…";
+      }
+      ctx.fillText(text, pad, H - pad);
+      ctx.font = `700 ${Math.round(fs * 0.6)}px sans-serif`;
+      ctx.fillStyle = "rgba(255,255,255,.85)";
+      ctx.textBaseline = "top";
+      ctx.fillText("📍 Sunshine Pool Villa  by " + (p.author || ""), pad, pad);
+    }
+    c.toBlob(b => {
+      if (!b) { window.open(p.url, "_blank"); return; }
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(b);
+      a.download = `sunshine-villa-${p.id}.jpg`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      toast("📥 保存しました！");
+    }, "image/jpeg", 0.92);
+  } catch (err) {
+    console.warn(err);
+    // 失敗時は画像を新規タブで開く（長押しで保存できる）
+    window.open(p.url, "_blank");
+    toast("画像を開きました。長押しで保存できます");
+  }
 }
 
 function show(id) {
@@ -848,6 +1111,7 @@ function renderMain() {
   }
   renderMembers();
   initBanner();
+  renderFeed();
 
   // クラウド：自分を登録して最新データを取得
   const myProfile = (state.profiles && state.profiles[state.name]) || {};
