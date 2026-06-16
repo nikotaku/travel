@@ -52,6 +52,8 @@
 
   /* ---------- きゅんポイント等のチップ選択 ---------- */
   .chip-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .kyun-sub { font-size: 12px; font-weight: 700; color: var(--sub); margin: 14px 0 2px; }
+  .kyun-sub:first-child { margin-top: 4px; }
   .chip-opt {
     font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 999px;
     border: 1.5px solid var(--line); background: var(--card); color: var(--ink);
@@ -529,8 +531,8 @@
   <label for="input-ideal">理想のデートは？</label>
   <input type="text" id="input-ideal" placeholder="例）水族館デート" autocomplete="off">
 
-  <label>きゅんポイントは？（複数選択OK）</label>
-  <div class="chip-group" id="kyun-group"></div>
+  <label>きゅんポイントは？（複数選択OK・男女どちらからでも）</label>
+  <div id="kyun-group"></div>
 
   <button class="btn" id="btn-questions" disabled>しおりを見る</button>
 </section>
@@ -1162,22 +1164,30 @@ $("btn-name").addEventListener("click", () => {
 });
 
 /* ---------- ② 質問（プロフィール） ---------- */
-const KYUN = [
-  "イケボ", "高身長", "面白い", "誠実", "料理上手", "シゴデキ", "頼りになる",
-  "おしゃれ", "面倒見がいい", "甘え上手", "多趣味", "博識", "努力家"
+const KYUN_GROUPS = [
+  { label: "♀ 女性のきゅんポイント", items: [
+    "甘え上手", "料理上手", "おしゃれ", "笑顔がすてき", "気配り上手",
+    "聞き上手", "あざとかわいい", "一生懸命", "天然", "ニコニコ"
+  ]},
+  { label: "♂ 男性のきゅんポイント", items: [
+    "高身長", "料理上手", "甘え上手", "イケボ", "頼りになる", "シゴデキ",
+    "面倒見がいい", "リードが上手", "紳士", "多趣味", "博識", "努力家"
+  ]}
 ];
 let kyunSel = [];
 
 function renderKyunOptions() {
-  $("kyun-group").innerHTML = KYUN.map(k =>
-    `<span class="chip-opt ${kyunSel.includes(k) ? "on" : ""}" data-k="${escapeHtml(k)}">${escapeHtml(k)}</span>`
-  ).join("");
+  $("kyun-group").innerHTML = KYUN_GROUPS.map(g => `
+    <div class="kyun-sub">${escapeHtml(g.label)}</div>
+    <div class="chip-group">${g.items.map(k =>
+      `<span class="chip-opt ${kyunSel.includes(k) ? "on" : ""}" data-k="${escapeHtml(k)}">${escapeHtml(k)}</span>`
+    ).join("")}</div>`).join("");
   $("kyun-group").querySelectorAll(".chip-opt").forEach(el => {
     el.addEventListener("click", () => {
       const k = el.dataset.k;
       if (kyunSel.includes(k)) kyunSel = kyunSel.filter(x => x !== k);
       else kyunSel.push(k);
-      el.classList.toggle("on");
+      renderKyunOptions(); // 同じ項目が両グループにあっても表示を同期
     });
   });
 }
