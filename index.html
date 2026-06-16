@@ -261,6 +261,37 @@
   }
   .cook-empty { font-size: 13px; color: var(--sub); text-align: center; padding: 16px 0; }
 
+  /* ---------- トークテーマガチャ ---------- */
+  .gacha-stage {
+    text-align: center; padding: 18px 12px; margin: 6px 0 14px;
+    border: 1.5px dashed var(--line); border-radius: 14px; background: #fcfbf8;
+  }
+  .gacha-member { font-size: 24px; font-weight: 800; color: var(--accent); min-height: 30px; }
+  .gacha-member.spinning { opacity: .85; }
+  .gacha-theme {
+    margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line);
+    font-size: 18px; font-weight: 700; line-height: 1.5; color: var(--ink);
+  }
+  .gacha-theme small { display: block; font-size: 12px; color: var(--sub); margin-bottom: 6px; font-weight: 600; }
+
+  /* ---------- 人間性あぶり出し ---------- */
+  .aburi-topic {
+    text-align: center; font-size: 19px; font-weight: 800; line-height: 1.5;
+    padding: 16px; margin-bottom: 14px; border-radius: 14px;
+    background: var(--accent-soft); color: var(--accent);
+  }
+  .aburi-mine { display: flex; gap: 8px; margin-bottom: 10px; }
+  .aburi-mine input { flex: 1; padding: 12px 14px; font-size: 15px; }
+  .aburi-status { font-size: 13px; color: var(--sub); text-align: center; margin: 10px 0; }
+  .aburi-ans {
+    display: flex; align-items: baseline; gap: 10px; padding: 11px 4px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .aburi-ans:last-child { border-bottom: none; }
+  .aburi-ans .aa-name { font-size: 13px; font-weight: 700; flex-shrink: 0; min-width: 72px; color: var(--sub); }
+  .aburi-ans .aa-text { font-size: 15px; font-weight: 600; }
+  .aburi-hidden { color: var(--line); letter-spacing: 2px; }
+
   /* ---------- オープニング（スプラッシュ＆スライドショー） ---------- */
   .screen.full {
     position: fixed; inset: 0; max-width: none; margin: 0; padding: 0;
@@ -640,6 +671,36 @@
     <div id="cook-results"></div>
   </div>
 
+  <div class="card lockable" id="lock-gacha">
+    <div class="lock-overlay">
+      <div class="lo-title">🔒 COMING SOON</div>
+      <div class="lo-sub" id="gacha-sub">6/20オープン予定</div>
+    </div>
+    <div class="lock-inner">
+      <h2>🎤 トークテーマガチャ</h2>
+      <p class="tip-note">ルーレットで「回す人」を決めて、トークテーマをガチャ！会話のきっかけに🎁</p>
+      <div class="gacha-stage">
+        <div class="gacha-member" id="gacha-member">？</div>
+        <div class="gacha-theme" id="gacha-theme" hidden></div>
+      </div>
+      <button class="g-btn full" id="gacha-spin">メンバーを決める！🎯</button>
+      <button class="g-btn full" id="gacha-draw" hidden>テーマを引く！🎁</button>
+      <button class="g-btn ghost full" id="gacha-again" hidden>もう一回</button>
+    </div>
+  </div>
+
+  <div class="card lockable" id="lock-aburi">
+    <div class="lock-overlay">
+      <div class="lo-title">🔒 COMING SOON</div>
+      <div class="lo-sub" id="aburi-sub">6/20オープン予定</div>
+    </div>
+    <div class="lock-inner">
+      <h2>🫣 人間性あぶり出し</h2>
+      <p class="tip-note">「〇〇といえば？」のお題に全員が回答。せーの！で一斉オープンして「なんでそれ？」でツッコもう。</p>
+      <div id="aburi-body"></div>
+    </div>
+  </div>
+
   <div class="card lockable" id="lock-wc">
     <div class="lock-overlay">
       <div class="lo-title">🔒 COMING SOON</div>
@@ -779,7 +840,7 @@ function rerenderActive() {
     if (state.members) { renderMembers(); renderMemberCards(); }
   }
   if ($("screen-play").classList.contains("active")) {
-    renderTeams(); renderVotes(); renderCook();
+    renderTeams(); renderVotes(); renderCook(); renderAburi();
   }
   if (state.posts) renderFeed();
 }
@@ -798,10 +859,12 @@ async function cloudLoadAll() {
     s.from("cook_entries").select("*"),
     s.from("cook_votes").select("*"),
     s.from("cook_timer").select("*"),
-    s.from("posts").select("*").order("created_at", { ascending: false })
+    s.from("posts").select("*").order("created_at", { ascending: false }),
+    s.from("aburi_rounds").select("*").order("created_at", { ascending: false }).limit(1),
+    s.from("aburi_answers").select("*")
   ]));
   if (!res) return;
-  const [mem, wc, ce, cv, ct, ps] = res;
+  const [mem, wc, ce, cv, ct, ps, ar, aa] = res;
   if (mem && mem.data) {
     state.members = mem.data.map(r => ({ name: r.name, chips: r.chips || 0 }));
     // 自分がまだ反映されていなければ表示上は残す
@@ -837,6 +900,14 @@ async function cloudLoadAll() {
       id: r.id, author: r.author, caption: r.caption,
       url: r.image_url, path: r.storage_path, at: r.created_at
     }));
+  }
+  if (ar) {
+    const round = (ar.data && ar.data[0]) || null;
+    const answers = {};
+    if (round && aa && aa.data) {
+      aa.data.filter(a => a.round_id === round.id).forEach(a => answers[a.member] = a.answer);
+    }
+    state.aburi = round ? { id: round.id, topic: round.topic, revealed: round.revealed, answers } : null;
   }
   save();
   rerenderActive();
@@ -1379,6 +1450,7 @@ function renderPlay() {
   renderTeams();
   renderVotes();
   renderCook();
+  renderAburi();
   applyPlayLocks();
 }
 function renderTeams() {
@@ -1609,14 +1681,15 @@ function openCountdownText() {
   const mins = Math.floor((ms % 3600000) / 60000);
   return `あと${hours}時間${mins}分`;
 }
-// Wカップ予想・ミニゲームのカミングスーン表示を反映（料理王はロックしない）
+// カミングスーン表示を反映（料理王はロックしない）
 function applyPlayLocks() {
   const open = isPlayOpen();
   const sub = open ? "" : `6/20オープン予定${openCountdownText() ? "（" + openCountdownText() + "）" : ""}`;
-  ["lock-wc", "lock-mg"].forEach(id => {
-    $(id).classList.toggle("locked", !open);
+  const cards = { "lock-wc": "wc-sub", "lock-mg": "mg-sub", "lock-gacha": "gacha-sub", "lock-aburi": "aburi-sub" };
+  Object.entries(cards).forEach(([card, subId]) => {
+    $(card).classList.toggle("locked", !open);
+    if (!open) $(subId).textContent = sub;
   });
-  if (!open) { $("wc-sub").textContent = sub; $("mg-sub").textContent = sub; }
 }
 
 /* ---------- あそびコーナー：ミニゲーム ---------- */
@@ -1673,6 +1746,168 @@ document.querySelectorAll(".g-btn.jk").forEach(btn => {
       (me + 1) % 3 === cpu ? "勝ち！🎉" : "負け…😭";
   });
 });
+
+/* ---------- トークテーマガチャ ---------- */
+// ※テーマは後で差し替え予定（仮）
+const TALK_THEMES = [
+  "今までで一番の旅行先は？",
+  "最近ひそかにハマっていることは？",
+  "実は人に言ってない特技は？",
+  "無人島に1つ持っていくなら？",
+  "子どもの頃の夢は？",
+  "人生で一番がんばったことは？",
+  "タイムマシンで行くなら過去？未来？",
+  "100万円もらったら何に使う？",
+  "自分を動物にたとえると？",
+  "最近泣いた・笑ったことは？",
+  "理想の休日の過ごし方は？",
+  "ここだけの話、実は…？"
+];
+
+$("gacha-spin").addEventListener("click", () => {
+  const names = (state.members || []).map(m => m.name);
+  if (names.length === 0) { toast("メンバーを追加してね"); return; }
+  const btn = $("gacha-spin");
+  btn.disabled = true;
+  $("gacha-theme").hidden = true;
+  $("gacha-draw").hidden = true;
+  $("gacha-again").hidden = true;
+  const disp = $("gacha-member");
+  disp.classList.add("spinning");
+  let n = 0;
+  const total = 16 + Math.floor(Math.random() * names.length);
+  const t = setInterval(() => {
+    disp.textContent = names[n % names.length];
+    n++;
+    if (n > total) {
+      clearInterval(t);
+      const who = names[(n - 1) % names.length];
+      disp.classList.remove("spinning");
+      disp.textContent = "🎯 " + who;
+      btn.disabled = false;
+      btn.hidden = true;
+      $("gacha-draw").hidden = false;
+    }
+  }, 90);
+});
+
+$("gacha-draw").addEventListener("click", () => {
+  const btn = $("gacha-draw");
+  btn.disabled = true;
+  const el = $("gacha-theme");
+  el.hidden = false;
+  let n = 0;
+  const total = 14 + Math.floor(Math.random() * TALK_THEMES.length);
+  const t = setInterval(() => {
+    el.innerHTML = "<small>トークテーマ</small>" + escapeHtml(TALK_THEMES[n % TALK_THEMES.length]);
+    n++;
+    if (n > total) {
+      clearInterval(t);
+      el.innerHTML = "<small>🎁 トークテーマ</small>" + escapeHtml(TALK_THEMES[(n - 1) % TALK_THEMES.length]);
+      btn.disabled = false;
+      btn.hidden = true;
+      $("gacha-again").hidden = false;
+    }
+  }, 80);
+});
+
+$("gacha-again").addEventListener("click", () => {
+  $("gacha-member").textContent = "？";
+  $("gacha-theme").hidden = true;
+  $("gacha-again").hidden = true;
+  $("gacha-draw").hidden = true;
+  $("gacha-spin").hidden = false;
+});
+
+/* ---------- 人間性あぶり出し（〇〇といえば？） ---------- */
+const ABURI_TOPICS = [
+  "デートで行きたい場所といえば？",
+  "テンションが上がる食べ物といえば？",
+  "つい財布のひもがゆるむものといえば？",
+  "リラックスする瞬間といえば？",
+  "ちょっと自慢できることといえば？",
+  "落ち込んだときの回復方法といえば？",
+  "理想の朝の過ごし方といえば？",
+  "もらって嬉しいプレゼントといえば？",
+  "旅行に必ず持っていくものといえば？",
+  "ついやってしまうクセといえば？",
+  "好きなタイプの人といえば？",
+  "週末にやりたいことといえば？"
+];
+
+function renderAburi() {
+  const body = $("aburi-body");
+  if (!body) return;
+  const a = state.aburi;
+  if (!a) {
+    body.innerHTML = `<button class="g-btn full" id="aburi-new">お題を引く 🎲</button>`;
+    $("aburi-new").addEventListener("click", aburiNewRound);
+    return;
+  }
+  const answers = a.answers || {};
+  const answeredCount = Object.keys(answers).length;
+  const mine = answers[state.name] || "";
+  if (!a.revealed) {
+    body.innerHTML = `
+      <div class="aburi-topic">${escapeHtml(a.topic)}</div>
+      <div class="aburi-mine">
+        <input type="text" id="aburi-input" placeholder="あなたの答え" maxlength="40" value="${escapeHtml(mine)}">
+        <button class="g-btn" id="aburi-submit">${mine ? "変更" : "回答"}</button>
+      </div>
+      <div class="aburi-status">${answeredCount}人が回答済み${mine ? "（あなたも回答済み✓）" : ""}</div>
+      <button class="g-btn full" id="aburi-reveal">せーの！で一斉オープン 👀</button>
+      <button class="g-btn ghost full" id="aburi-next" style="margin-top:8px">次のお題にする</button>`;
+    $("aburi-submit").addEventListener("click", aburiSubmit);
+    $("aburi-input").addEventListener("keydown", e => { if (e.key === "Enter") aburiSubmit(); });
+    $("aburi-reveal").addEventListener("click", aburiReveal);
+    $("aburi-next").addEventListener("click", aburiNewRound);
+  } else {
+    const rows = Object.entries(answers);
+    body.innerHTML = `
+      <div class="aburi-topic">${escapeHtml(a.topic)}</div>
+      ${rows.length ? rows.map(([name, ans]) => `
+        <div class="aburi-ans">
+          <span class="aa-name">${escapeHtml(name)}</span>
+          <span class="aa-text">${escapeHtml(ans)}</span>
+        </div>`).join("") : '<div class="aburi-status">回答がありませんでした</div>'}
+      <button class="g-btn full" id="aburi-next" style="margin-top:14px">次のお題を引く 🎲</button>`;
+    $("aburi-next").addEventListener("click", aburiNewRound);
+  }
+}
+
+async function aburiNewRound() {
+  const topic = ABURI_TOPICS[Math.floor(Math.random() * ABURI_TOPICS.length)];
+  const round = { id: "r" + Date.now().toString(36), topic, revealed: false };
+  state.aburi = { ...round, answers: {} };
+  save(); renderAburi();
+  await cloud(s => s.from("aburi_rounds").insert(round));
+  cloudLoadAll();
+}
+
+async function aburiSubmit() {
+  const a = state.aburi;
+  if (!a) return;
+  if (!state.name) { toast("先に名前を登録してね"); return; }
+  const ans = $("aburi-input").value.trim();
+  if (!ans) { toast("答えを入力してね"); return; }
+  a.answers = a.answers || {};
+  a.answers[state.name] = ans;
+  save(); renderAburi();
+  await cloud(s => s.from("aburi_answers").upsert(
+    { round_id: a.id, member: state.name, answer: ans, updated_at: new Date().toISOString() },
+    { onConflict: "round_id,member" }));
+  toast("回答しました！");
+}
+
+async function aburiReveal() {
+  const a = state.aburi;
+  if (!a) return;
+  if (Object.keys(a.answers || {}).length === 0) { toast("まだ誰も回答していないよ"); return; }
+  a.revealed = true;
+  save(); renderAburi();
+  await cloud(s => s.from("aburi_rounds").update({ revealed: true }).eq("id", a.id));
+  cloudLoadAll();
+}
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c =>
