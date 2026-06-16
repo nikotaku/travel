@@ -473,6 +473,17 @@
 
 <!-- ⓪' オープニング：スライドショー -->
 
+<!-- ⓪'' メニュー（しおりを見る / プロフ入力） -->
+<section id="screen-menu" class="screen">
+  <div class="hero">
+    <span class="emoji">🌴</span>
+    <h1>Sunshine Pool Villa</h1>
+    <p id="menu-hello">ようこそ！</p>
+  </div>
+  <button class="btn" id="btn-go-shiori">📖 しおりを見る</button>
+  <button class="btn" id="btn-go-prof" style="background:#9b937f; margin-top:14px">✏️ プロフ入力</button>
+</section>
+
 <!-- ① ニックネーム入力 -->
 <section id="screen-name" class="screen">
   <div class="hero">
@@ -1229,13 +1240,18 @@ $("btn-questions").addEventListener("click", () => {
 
 /* ---------- ③ メイン ---------- */
 function renderMain() {
-  $("disp-name").textContent = state.name + " さん";
-  $("disp-tags").innerHTML = [
-    "💘 ラブタイプ: " + (state.lovetype || "-"),
-    "🧠 MBTI: " + (state.mbti || "-"),
-    "💑 理想のデート: " + (state.idealDate || "-"),
-    ...((state.kyun || []).map(k => "💗 " + k))
-  ].map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("");
+  const hasProfile = state.name && (state.lovetype || state.mbti || state.idealDate || (state.kyun && state.kyun.length));
+  $("disp-name").textContent = state.name ? state.name + " さん" : "ようこそ！";
+  if (hasProfile) {
+    $("disp-tags").innerHTML = [
+      "💘 ラブタイプ: " + (state.lovetype || "-"),
+      "🧠 MBTI: " + (state.mbti || "-"),
+      "💑 理想のデート: " + (state.idealDate || "-"),
+      ...((state.kyun || []).map(k => "💗 " + k))
+    ].map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("");
+  } else {
+    $("disp-tags").innerHTML = '<span class="tag">プロフ未入力（メニューの「プロフ入力」から登録できます）</span>';
+  }
 
   $("inn-name").textContent = TRIP.inn.name;
   $("inn-addr").textContent = TRIP.inn.address;
@@ -1259,9 +1275,9 @@ function renderMain() {
 
   renderBring();
 
-  // 自分を最初のメンバーとして登録
+  // 自分を最初のメンバーとして登録（プロフ未入力＝名前なしの場合は登録しない）
   state.members = state.members || [];
-  if (!state.members.some(m => m.name === state.name)) {
+  if (state.name && !state.members.some(m => m.name === state.name)) {
     state.members.unshift({ name: state.name, chips: 0 });
     save();
   }
@@ -1270,13 +1286,15 @@ function renderMain() {
   renderFeed();
 
   // クラウド：自分を登録して最新データを取得
-  const myProfile = (state.profiles && state.profiles[state.name]) || {};
-  cloudUpsertMember(state.name, {
-    lovetype: myProfile.lovetype || state.lovetype || null,
-    mbti: myProfile.mbti || state.mbti || null,
-    ideal_date: myProfile.idealDate || state.idealDate || null,
-    kyun: myProfile.kyun || state.kyun || []
-  });
+  if (state.name) {
+    const myProfile = (state.profiles && state.profiles[state.name]) || {};
+    cloudUpsertMember(state.name, {
+      lovetype: myProfile.lovetype || state.lovetype || null,
+      mbti: myProfile.mbti || state.mbti || null,
+      ideal_date: myProfile.idealDate || state.idealDate || null,
+      kyun: myProfile.kyun || state.kyun || []
+    });
+  }
   cloudLoadAll();
 }
 
@@ -1369,17 +1387,24 @@ const SLIDES = [
 ];
 
 function endOpening() {
-  if (state.name && state.lovetype && state.mbti && state.idealDate) {
-    renderMain();
-    show("screen-main");
-  } else if (state.name) {
-    fillQuestions();
-    show("screen-questions");
-  } else {
-    show("screen-name");
-  }
+  $("menu-hello").textContent = state.name
+    ? `おかえりなさい、${state.name}さん 🌤`
+    : "ようこそ！下から選んでね";
+  show("screen-menu");
 }
 $("btn-welcome").addEventListener("click", endOpening);
+
+// メニュー：しおりを見る（プロフ未入力でもOK）
+$("btn-go-shiori").addEventListener("click", () => {
+  renderMain();
+  show("screen-main");
+});
+// メニュー：プロフ入力（登録済みなら前回値を引き継いで編集）
+$("btn-go-prof").addEventListener("click", () => {
+  if (state.name) $("input-name").value = state.name;
+  $("btn-name").disabled = !($("input-name").value.trim());
+  show("screen-name");
+});
 
 /* ---------- トップのスライドバナー ---------- */
 function initBanner() {
