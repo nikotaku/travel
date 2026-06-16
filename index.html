@@ -6,14 +6,16 @@
 <title>旅のしおり</title>
 <style>
   :root {
-    --bg: #f6f3ee;
-    --card: #ffffff;
-    --ink: #2b2b2b;
-    --sub: #8a8378;
-    --accent: #e07a3f;
-    --accent-soft: #fdeadd;
-    --green: #4caf7d;
-    --line: #e8e2d8;
+    --bg: #14151a;
+    --card: #1e2027;
+    --card-2: #262932;
+    --ink: #ece7dd;
+    --sub: #9b958a;
+    --accent: #c9a96b;
+    --accent-2: #d8be86;
+    --accent-soft: #2a2820;
+    --green: #93b9a0;
+    --line: #34363f;
     --radius: 16px;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -64,19 +66,25 @@
 
   .btn {
     display: block; width: 100%; margin-top: 28px; padding: 16px;
-    font-size: 16px; font-weight: 700; letter-spacing: .1em;
-    color: #fff; background: var(--accent); border: none; border-radius: 999px;
+    font-size: 16px; font-weight: 700; letter-spacing: .12em;
+    color: #17140d; background: linear-gradient(135deg, var(--accent-2), var(--accent));
+    border: none; border-radius: 999px;
     cursor: pointer; transition: opacity .15s;
   }
   .btn:disabled { opacity: .4; }
   .btn:active { opacity: .8; }
+  .btn-ghost {
+    background: var(--card-2); color: var(--ink);
+    border: 1px solid var(--line);
+  }
 
   .card {
     background: var(--card); border-radius: var(--radius);
     padding: 20px; margin-top: 16px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.04);
+    border: 1px solid var(--line);
+    box-shadow: 0 8px 24px rgba(0,0,0,.35);
   }
-  .card h2 { font-size: 15px; letter-spacing: .1em; color: var(--accent); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .card h2 { font-size: 15px; letter-spacing: .12em; color: var(--accent); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; font-weight: 700; }
 
   /* ---------- メイン画面 ---------- */
   .greeting { padding: 28px 4px 4px; }
@@ -90,12 +98,13 @@
 
   .inn-photo {
     height: 140px; border-radius: 12px; margin-bottom: 14px;
-    background: linear-gradient(135deg, #f3c98b, #e07a3f);
+    background: linear-gradient(135deg, #2c2f3a, #16171d);
+    border: 1px solid var(--line);
     display: flex; align-items: center; justify-content: center; font-size: 48px;
   }
   .inn-name { font-size: 18px; font-weight: 700; }
   .inn-addr { font-size: 12px; color: var(--sub); margin-top: 4px; }
-  .inn-note { font-size: 13px; line-height: 1.8; margin-top: 12px; color: #555; }
+  .inn-note { font-size: 13px; line-height: 1.8; margin-top: 12px; color: var(--sub); }
   .wifi-box {
     margin-top: 14px; padding: 12px 14px; border-radius: 12px;
     background: var(--accent-soft); font-size: 13px; line-height: 1.8;
@@ -163,9 +172,10 @@
   /* 完了トースト */
   #toast {
     position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(80px);
-    background: var(--ink); color: #fff; font-size: 13px; font-weight: 600;
+    background: #0d0e12; color: var(--ink); border: 1px solid var(--accent);
+    font-size: 13px; font-weight: 600;
     padding: 12px 22px; border-radius: 999px; opacity: 0; transition: all .3s ease;
-    pointer-events: none; white-space: nowrap;
+    pointer-events: none; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,.5);
   }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -176,12 +186,13 @@
   }
   .play-banner button {
     flex-shrink: 0; padding: 10px 18px; border: none; border-radius: 999px;
-    background: var(--accent); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: #17140d;
+    font-size: 13px; font-weight: 700; cursor: pointer;
   }
-  .play-banner.locked { background: #eee9e0; }
+  .play-banner.locked { background: #23242b; }
   .play-banner.locked .q-title { color: var(--sub); }
   .play-banner.locked button {
-    background: #cfc7b8; cursor: not-allowed; letter-spacing: .05em;
+    background: #3a3c45; color: var(--sub); cursor: not-allowed; letter-spacing: .05em;
   }
   .play-banner .countdown { font-size: 11px; font-weight: 700; color: var(--accent); margin-top: 4px; }
   .team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
@@ -212,13 +223,14 @@
   .g-result { font-size: 14px; font-weight: 700; margin-bottom: 14px; }
   .g-btn {
     padding: 12px 32px; border: none; border-radius: 999px;
-    background: var(--accent); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: #17140d;
+    font-size: 14px; font-weight: 700; cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
   .g-btn:active { opacity: .8; }
   .janken-btns { display: flex; gap: 10px; justify-content: center; }
-  .g-btn.jk { font-size: 24px; padding: 12px 20px; }
-  .g-btn.ghost { background: #cfc7b8; }
+  .g-btn.jk { font-size: 24px; padding: 12px 20px; background: var(--card-2); color: var(--ink); border: 1px solid var(--line); }
+  .g-btn.ghost { background: #3a3c45; color: var(--ink); }
   .g-btn.full { display: block; width: 100%; margin-top: 10px; }
 
   /* ---------- 料理王 ---------- */
@@ -249,7 +261,7 @@
     cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; position: relative;
   }
   .cook-entry.voted { border-color: var(--accent); background: var(--accent-soft); }
-  .cook-entry.king { border-color: #e6b800; background: #fff8e1; }
+  .cook-entry.king { border-color: var(--accent-2); background: #2e2a1c; }
   .cook-entry .ce-rank { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; }
   .cook-entry .ce-body { flex: 1; min-width: 0; }
   .cook-entry .ce-dish { font-size: 15px; font-weight: 700; }
@@ -266,7 +278,7 @@
   /* ---------- トークテーマガチャ ---------- */
   .gacha-stage {
     text-align: center; padding: 18px 12px; margin: 6px 0 14px;
-    border: 1.5px dashed var(--line); border-radius: 14px; background: #fcfbf8;
+    border: 1.5px dashed var(--line); border-radius: 14px; background: var(--card-2);
   }
   .gacha-member { font-size: 24px; font-weight: 800; color: var(--accent); min-height: 30px; }
   .gacha-member.spinning { opacity: .85; }
@@ -323,27 +335,34 @@
   .btn-welcome:active { background: rgba(236,230,216,.15); }
   @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(236,230,216,.25); } 50% { box-shadow: 0 0 0 10px rgba(236,230,216,0); } }
 
-  /* ---------- トップのスライドバナー ---------- */
-  .bn-wrap { margin-top: 4px; }
+  /* ---------- トップのスライドバナー（全幅ヒーロー） ---------- */
+  .bn-wrap { margin: -24px -20px 0; position: relative; }
   .banner {
     display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
-    border-radius: var(--radius); -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
   }
   .banner::-webkit-scrollbar { display: none; }
   .bn-slide {
-    flex: 0 0 100%; height: 200px; scroll-snap-align: center; position: relative;
+    flex: 0 0 100%; height: 62vh; min-height: 340px; scroll-snap-align: center; position: relative;
     background-size: cover; background-position: center;
-    display: flex; align-items: center; justify-content: center; font-size: 64px;
+    display: flex; align-items: center; justify-content: center; font-size: 72px;
+  }
+  /* 下部を背景になじませる高級感グラデーション */
+  .bn-slide::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(to bottom, rgba(20,21,26,0) 55%, rgba(20,21,26,.85) 100%);
   }
   .bn-cap {
-    position: absolute; left: 14px; bottom: 12px;
-    color: #fff; font-size: 13px; font-weight: 700; letter-spacing: .06em;
-    text-shadow: 0 1px 10px rgba(0,0,0,.65);
+    position: absolute; left: 22px; bottom: 26px; z-index: 1;
+    color: #fff; font-size: 16px; font-weight: 700; letter-spacing: .08em;
+    text-shadow: 0 1px 12px rgba(0,0,0,.8);
   }
-  .bn-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
-  .bn-dots i { width: 6px; height: 6px; border-radius: 50%; background: #d8d1c4; transition: background .3s; }
-  .bn-dots i.on { background: var(--accent); }
+  .bn-dots {
+    position: absolute; left: 0; right: 0; bottom: 12px; z-index: 1;
+    display: flex; justify-content: center; gap: 6px;
+  }
+  .bn-dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.4); transition: background .3s; }
+  .bn-dots i.on { background: var(--accent-2); }
 
   /* ---------- メンバーカード ---------- */
   .mem-carousel {
@@ -353,17 +372,17 @@
   .mem-carousel::-webkit-scrollbar { display: none; }
   .mem-card {
     flex: 0 0 78%; scroll-snap-align: center; text-align: center;
-    border: 1.5px solid var(--line); border-radius: 14px; padding: 20px 16px;
-    background: #fffdf9;
+    border: 1px solid var(--line); border-radius: 14px; padding: 20px 16px;
+    background: var(--card-2);
   }
   .mc-avatar {
     width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 10px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 24px; font-weight: 700; color: #fff;
+    font-size: 24px; font-weight: 700; color: #17140d;
   }
   .mc-name { font-size: 16px; font-weight: 700; }
   .mc-tags { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-  .mc-stats { margin-top: 12px; font-size: 13px; font-weight: 600; color: #555; }
+  .mc-stats { margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--sub); }
 
   /* ---------- 持ち物トグル ---------- */
   .toggle-head {
@@ -396,21 +415,22 @@
   .tl-pick {
     display: flex; align-items: center; justify-content: center; position: relative;
     min-height: 56px; border: 1.5px dashed var(--line); border-radius: 12px;
-    background: #fcfbf8; color: var(--accent); font-size: 14px; font-weight: 700;
+    background: var(--card-2); color: var(--accent); font-size: 14px; font-weight: 700;
     cursor: pointer; overflow: hidden; -webkit-tap-highlight-color: transparent;
   }
   .tl-preview { width: 100%; max-height: 260px; object-fit: cover; display: block; }
   .tl-compose input[type=text] { padding: 12px 14px; font-size: 15px; }
   .tl-share {
-    padding: 13px; border: none; border-radius: 999px; background: var(--accent);
-    color: #fff; font-size: 15px; font-weight: 700; letter-spacing: .08em; cursor: pointer;
+    padding: 13px; border: none; border-radius: 999px;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: #17140d;
+    font-size: 15px; font-weight: 700; letter-spacing: .08em; cursor: pointer;
   }
   .tl-share:disabled { opacity: .4; }
   .tl-share:active { opacity: .85; }
 
   .tl-post {
     border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
-    margin-top: 16px; background: #fffdf9;
+    margin-top: 16px; background: var(--card-2);
   }
   .tl-head {
     display: flex; align-items: center; gap: 8px; padding: 12px 14px 10px;
@@ -418,7 +438,7 @@
   .tl-avatar {
     width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 15px; font-weight: 700; color: #fff;
+    font-size: 15px; font-weight: 700; color: #17140d;
   }
   .tl-author { font-size: 14px; font-weight: 700; flex: 1; min-width: 0;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -436,9 +456,8 @@
   .tl-empty { font-size: 13px; color: var(--sub); text-align: center; padding: 20px 0 4px; }
 
   /* ---------- ミッション予告 ---------- */
-  .mission-card { background: linear-gradient(135deg, #fff3e6, #ffe7d1); }
-  .mission-card h2 { color: var(--accent); }
-  .mission-card p { font-size: 14px; line-height: 1.9; color: #6b5a45; }
+  .mission-card .mission-inner { padding-top: 6px; }
+  .mission-card p { font-size: 14px; line-height: 1.9; color: var(--ink); }
   .mission-card .gift { font-size: 40px; text-align: center; display: block; margin: 6px 0 12px; }
 
   /* ---------- カードのカミングスーン ---------- */
@@ -447,7 +466,7 @@
   .lock-overlay {
     display: none; position: absolute; inset: 0; z-index: 3;
     flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-    background: rgba(255,255,255,.55); text-align: center;
+    background: rgba(20,21,26,.72); text-align: center;
   }
   .card.locked .lock-overlay { display: flex; }
   .lock-overlay .lo-title { font-size: 16px; font-weight: 800; letter-spacing: .12em; color: var(--ink); }
@@ -481,7 +500,7 @@
     <p id="menu-hello">ようこそ！</p>
   </div>
   <button class="btn" id="btn-go-shiori">📖 しおりを見る</button>
-  <button class="btn" id="btn-go-prof" style="background:#9b937f; margin-top:14px">✏️ プロフ入力</button>
+  <button class="btn btn-ghost" id="btn-go-prof" style="margin-top:14px">✏️ プロフ入力</button>
 </section>
 
 <!-- ① ニックネーム入力 -->
@@ -576,10 +595,14 @@
   </div>
 
   <div class="card mission-card">
-    <h2>🎁 ミッション</h2>
-    <span class="gift">🎁</span>
-    <p>この旅には様々なミッションが用意されています。<br>
-       ミッションクリアで素敵な景品も。<br><b>お楽しみに！</b></p>
+    <button class="toggle-head" aria-expanded="false">
+      <span>🎁 ミッション</span><span class="toggle-arrow">▼</span>
+    </button>
+    <div class="toggle-body mission-inner" hidden>
+      <span class="gift">🎁</span>
+      <p>この旅には様々なミッションが用意されています。<br>
+         ミッションクリアで素敵な景品も。<br><b>お楽しみに！</b></p>
+    </div>
   </div>
 
   <div class="card">
@@ -598,22 +621,34 @@
   </div>
 
   <div class="card">
-    <h2>🏨 今夜のお宿</h2>
-    <div class="inn-photo">🏖</div>
-    <div class="inn-name" id="inn-name"></div>
-    <div class="inn-addr" id="inn-addr"></div>
-    <div class="inn-note" id="inn-note"></div>
-    <div class="wifi-box" id="wifi-box"></div>
+    <button class="toggle-head" aria-expanded="false">
+      <span>🏨 今夜のお宿</span><span class="toggle-arrow">▼</span>
+    </button>
+    <div class="toggle-body" hidden>
+      <div class="inn-photo">🏖</div>
+      <div class="inn-name" id="inn-name"></div>
+      <div class="inn-addr" id="inn-addr"></div>
+      <div class="inn-note" id="inn-note"></div>
+      <div class="wifi-box" id="wifi-box"></div>
+    </div>
   </div>
 
   <div class="card">
-    <h2>🍖 BBQメモ</h2>
-    <div id="bbq-list"></div>
+    <button class="toggle-head" aria-expanded="false">
+      <span>🍖 BBQメモ</span><span class="toggle-arrow">▼</span>
+    </button>
+    <div class="toggle-body" hidden>
+      <div id="bbq-list"></div>
+    </div>
   </div>
 
   <div class="card">
-    <h2>🛒 買い出しスポット</h2>
-    <div id="shop-list"></div>
+    <button class="toggle-head" aria-expanded="false">
+      <span>🛒 買い出しスポット</span><span class="toggle-arrow">▼</span>
+    </button>
+    <div class="toggle-body" hidden>
+      <div id="shop-list"></div>
+    </div>
   </div>
 
   <div class="card">
@@ -623,29 +658,27 @@
   </div>
 
   <div class="card">
-    <h2>🗺 アクセス</h2>
-    <div id="access-list"></div>
+    <button class="toggle-head" aria-expanded="false">
+      <span>🗺 アクセス</span><span class="toggle-arrow">▼</span>
+    </button>
+    <div class="toggle-body" hidden>
+      <div id="access-list"></div>
+    </div>
   </div>
 
   <div class="card">
-    <h2>🎮 あそびコーナー</h2>
-    <div class="play-banner" id="play-banner">
-      <div>
-        <div class="q-title">👑 料理王は誰だ？！ ほか</div>
-        <div class="q-desc">料理王は<b>開催中</b>！Wカップ予想・ミニゲームは準備中…</div>
+    <button class="toggle-head" aria-expanded="false">
+      <span>🎮 THE GAME</span><span class="toggle-arrow">▼</span>
+    </button>
+    <div class="toggle-body" hidden>
+      <div class="play-banner" id="play-banner">
+        <div>
+          <div class="q-title">👑 料理王は誰だ？！ ほか</div>
+          <div class="q-desc">料理王は<b>開催中</b>！Wカップ予想・ミニゲームは準備中…</div>
+        </div>
+        <button id="btn-play">ひらく</button>
       </div>
-      <button id="btn-play">ひらく</button>
     </div>
-  </div>
-
-  <div class="card">
-    <h2>💰 チップ</h2>
-    <p class="tip-note">ことあるごとにチップを配ろう。<br>旅の終わりに一番多かった人には <b>金一封</b> 🧧</p>
-    <div class="tip-add">
-      <input type="text" id="input-member" placeholder="メンバーの名前" autocomplete="off">
-      <button id="btn-member">追加</button>
-    </div>
-    <div id="member-list"></div>
   </div>
 
   <button class="reset" id="btn-reset">最初からやり直す</button>
@@ -654,8 +687,8 @@
 <!-- ④ あそびコーナー（Wカップ予想投票・ミニゲーム） -->
 <section id="screen-play" class="screen">
   <div class="greeting">
-    <div class="hello">あそびコーナー ⚽</div>
-    <div class="name">Wカップ予想・料理王・ミニゲーム</div>
+    <div class="hello">THE GAME ⚽</div>
+    <div class="name">料理王・Wカップ予想・ミニゲーム</div>
   </div>
 
   <div class="card">
@@ -766,7 +799,7 @@
     </div>
   </div>
 
-  <button class="btn" id="btn-play-back" style="background:#9b937f">← しおりに戻る</button>
+  <button class="btn btn-ghost" id="btn-play-back">← しおりに戻る</button>
 </section>
 
 <div id="toast"></div>
@@ -854,7 +887,7 @@ async function cloud(fn) {
 // 現在表示中の画面を再描画
 function rerenderActive() {
   if ($("screen-main").classList.contains("active")) {
-    if (state.members) { renderMembers(); renderMemberCards(); }
+    if (state.members) { renderMemberCards(); }
   }
   if ($("screen-play").classList.contains("active")) {
     renderTeams(); renderVotes(); renderCook(); renderAburi();
@@ -1285,7 +1318,7 @@ function renderMain() {
     state.members.unshift({ name: state.name, chips: 0 });
     save();
   }
-  renderMembers();
+  renderMemberCards();
   initBanner();
   renderFeed();
 
@@ -1320,58 +1353,15 @@ function renderBring() {
     });
   });
 }
-$("bring-toggle").addEventListener("click", () => {
-  const body = $("bring-body");
-  const btn = $("bring-toggle");
-  const open = body.hidden;
-  body.hidden = !open;
-  btn.setAttribute("aria-expanded", String(open));
-});
-
-/* ---------- チップ ---------- */
-function renderMembers() {
-  const members = [...state.members].sort((a, b) => b.chips - a.chips);
-  const top = members[0];
-  const medals = ["🥇", "🥈", "🥉"];
-
-  $("member-list").innerHTML = members.map((m, i) => `
-    <div class="member">
-      <span class="m-rank">${m.chips > 0 && i < 3 ? medals[i] : i + 1}</span>
-      <span class="m-name">${escapeHtml(m.name)}</span>
-      ${top && m === top && m.chips > 0 ? '<span class="m-prize">🧧 金一封</span>' : ""}
-      <span class="m-chips">🪙 ${m.chips}</span>
-      <button class="m-btn" data-name="${escapeHtml(m.name)}" data-d="-1">−</button>
-      <button class="m-btn plus" data-name="${escapeHtml(m.name)}" data-d="1">＋</button>
-    </div>`).join("");
-
-  document.querySelectorAll(".m-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const member = state.members.find(m => m.name === btn.dataset.name);
-      if (!member) return;
-      member.chips = Math.max(0, member.chips + Number(btn.dataset.d));
-      save();
-      renderMembers();
-      cloudSetChips(member.name, member.chips);
-    });
+// 折りたたみカード（持ち物・ミッション・お宿・BBQ・買い出し・アクセス・THE GAME）
+document.querySelectorAll(".toggle-head").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const body = btn.parentElement.querySelector(".toggle-body");
+    if (!body) return;
+    const open = body.hidden;
+    body.hidden = !open;
+    btn.setAttribute("aria-expanded", String(open));
   });
-  renderMemberCards();
-}
-
-$("btn-member").addEventListener("click", () => {
-  const name = $("input-member").value.trim();
-  if (!name) return;
-  if (state.members.some(m => m.name === name)) {
-    toast("同じ名前のメンバーがいます");
-    return;
-  }
-  state.members.push({ name, chips: 0 });
-  save();
-  $("input-member").value = "";
-  renderMembers();
-  cloudUpsertMember(name, { chips: 0 });
-});
-$("input-member").addEventListener("keydown", e => {
-  if (e.key === "Enter") $("btn-member").click();
 });
 
 $("btn-reset").addEventListener("click", () => {
@@ -1446,7 +1436,7 @@ function initBanner() {
 function renderMemberCards() {
   const members = state.members || [];
   if (members.length === 0) {
-    $("mem-carousel").innerHTML = '<p class="tip-note">チップ欄からメンバーを追加してね</p>';
+    $("mem-carousel").innerHTML = '<p class="tip-note">まだメンバーがいません。「プロフ入力」で登録するとここに表示されます。</p>';
     return;
   }
   const votes = state.wcVotes || {};
@@ -1468,7 +1458,7 @@ function renderMemberCards() {
       <div class="mc-avatar" style="background:hsl(${hue},55%,62%)">${escapeHtml([...m.name][0])}</div>
       <div class="mc-name">${escapeHtml(m.name)}</div>
       <div class="mc-tags">${tags}</div>
-      <div class="mc-stats">🪙 ${m.chips}枚${t ? `　⚽ ${t.flag} ${escapeHtml(t.name)}` : ""}</div>
+      ${t ? `<div class="mc-stats">⚽ ${t.flag} ${escapeHtml(t.name)}</div>` : ""}
     </div>`;
   }).join("");
 }
