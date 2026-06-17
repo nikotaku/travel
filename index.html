@@ -247,6 +247,19 @@
   }
   .team .t-flag { font-size: 24px; display: block; margin-bottom: 2px; }
   .team.sel { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .match-img { width: 100%; border-radius: 12px; display: block; margin-bottom: 14px; border: 1px solid var(--line); }
+  .score-row { display: flex; align-items: flex-end; gap: 10px; margin: 16px 0 4px; }
+  .score-team { flex: 1; text-align: center; min-width: 0; }
+  .score-team .st-flag { font-size: 34px; }
+  .score-team .st-name { font-size: 14px; font-weight: 700; margin: 4px 0 8px; }
+  .score-team input {
+    width: 100%; text-align: center; font-size: 30px; font-weight: 800;
+    padding: 10px 4px; font-variant-numeric: tabular-nums;
+    border: 1.5px solid var(--line); border-radius: 12px;
+    background: var(--card-2); color: var(--ink); -webkit-appearance: none; appearance: none;
+  }
+  .score-team input:focus { border-color: var(--accent); }
+  .score-vs { font-size: 26px; font-weight: 800; color: var(--sub); padding-bottom: 14px; }
   #vote-result { margin-top: 18px; }
   .vote-row {
     display: flex; justify-content: space-between; gap: 10px;
@@ -770,8 +783,8 @@
 
   <div class="game-item" id="hub-wc">
     <div class="gi-info">
-      <div class="gi-title">🏆 Wカップ優勝予想</div>
-      <div class="gi-desc">優勝チームをみんなで予想投票</div>
+      <div class="gi-title">⚽ スコア予想</div>
+      <div class="gi-desc">日本×チュニジアの点数を予想して投票</div>
       <div class="gi-soon">🔒 6/20オープン予定</div>
     </div>
     <button class="gi-start" data-game="wc">始める</button>
@@ -815,15 +828,29 @@
   </div>
 </section>
 
-<!-- ゲーム：Wカップ予想 -->
+<!-- ゲーム：スコア予想 -->
 <section id="screen-g-wc" class="screen">
   <button class="btn btn-ghost gback">← ゲーム一覧</button>
   <div class="card">
-    <h2>🏆 Wカップ優勝予想投票</h2>
-    <p class="tip-note">2026 ワールドカップ、優勝するのはどこ？<br>投票する人を選んで、チームをタップ！</p>
+    <h2>⚽ スコア予想</h2>
+    <img class="match-img" src="images/match-jp-tn.jpg" alt="日本 vs チュニジア（FIFA World Cup 2026 Group F）">
+    <p class="tip-note">日本 × チュニジアの点数を予想して投票！<br>投票する人を選んで、それぞれの点数を入れてね。</p>
     <label for="vote-who">投票する人</label>
     <select id="vote-who"></select>
-    <div class="team-grid" id="team-grid"></div>
+    <div class="score-row">
+      <div class="score-team">
+        <div class="st-flag">🇯🇵</div>
+        <div class="st-name">日本</div>
+        <input type="number" id="score-jp" min="0" max="99" inputmode="numeric" placeholder="0">
+      </div>
+      <div class="score-vs">－</div>
+      <div class="score-team">
+        <div class="st-flag">🇹🇳</div>
+        <div class="st-name">チュニジア</div>
+        <input type="number" id="score-tn" min="0" max="99" inputmode="numeric" placeholder="0">
+      </div>
+    </div>
+    <button class="g-btn full" id="score-submit">この点数で投票する</button>
     <div id="vote-result"></div>
   </div>
 </section>
@@ -946,7 +973,7 @@ function rerenderActive() {
   if ($("screen-main").classList.contains("active")) {
     if (state.members) { renderMemberCards(); }
   }
-  if ($("screen-g-wc").classList.contains("active")) { renderTeams(); renderVotes(); }
+  if ($("screen-g-wc").classList.contains("active")) { renderWcScores(); renderVotes(); }
   if ($("screen-g-aburi").classList.contains("active")) { renderAburi(); }
   if (state.posts) renderFeed();
 }
@@ -985,7 +1012,7 @@ async function cloudLoadAll() {
   }
   if (wc && wc.data) {
     state.wcVotes = {};
-    wc.data.forEach(r => state.wcVotes[r.voter] = r.team);
+    wc.data.forEach(r => { if (r.jp != null && r.tn != null) state.wcVotes[r.voter] = { jp: r.jp, tn: r.tn }; });
   }
   if (ps && ps.data) {
     state.posts = ps.data.map(r => ({
@@ -1010,8 +1037,8 @@ const cloudUpsertMember = (name, fields = {}) =>
   cloud(s => s.from("members").upsert({ name, ...fields }, { onConflict: "name" }));
 const cloudSetChips = (name, chips) =>
   cloud(s => s.from("members").upsert({ name, chips }, { onConflict: "name" }));
-const cloudSetWcVote = (voter, team) =>
-  cloud(s => s.from("wc_votes").upsert({ voter, team, updated_at: new Date().toISOString() }, { onConflict: "voter" }));
+const cloudSetWcVote = (voter, jp, tn) =>
+  cloud(s => s.from("wc_votes").upsert({ voter, jp, tn, updated_at: new Date().toISOString() }, { onConflict: "voter" }));
 const cloudDelWcVote = (voter) =>
   cloud(s => s.from("wc_votes").delete().eq("voter", voter));
 
@@ -1532,7 +1559,7 @@ function renderMemberCards() {
   $("mem-carousel").innerHTML = members.map(m => {
     const p = profiles[m.name];
     const v = votes[m.name];
-    const t = v ? TEAMS.find(t => t.name === v) : null;
+    const scoreStr = (v && typeof v === "object") ? `🇯🇵 ${v.jp} - ${v.tn} 🇹🇳` : null;
     const hue = ([...m.name][0].codePointAt(0) * 47) % 360;
     const av = (p && p.avatar) || null;
     const avatarInner = isImgAvatar(av)
@@ -1551,7 +1578,7 @@ function renderMemberCards() {
       <div class="mc-avatar" style="background:${avatarBg}">${avatarInner}</div>
       <div class="mc-name">${escapeHtml(m.name)}</div>
       <div class="mc-tags">${tags}</div>
-      ${t ? `<div class="mc-stats">⚽ ${t.flag} ${escapeHtml(t.name)}</div>` : ""}
+      ${scoreStr ? `<div class="mc-stats">⚽ ${scoreStr}</div>` : ""}
     </div>`;
   }).join("");
 }
@@ -1579,7 +1606,7 @@ function fillVoteWho() {
 function openGame(game) {
   if (!isPlayOpen()) { toast(`🔒 6/20にオープンするよ！${openCountdownText()}`); return; }
   cloudLoadAll();
-  if (game === "wc") { fillVoteWho(); renderTeams(); renderVotes(); show("screen-g-wc"); }
+  if (game === "wc") { fillVoteWho(); renderWcScores(); renderVotes(); show("screen-g-wc"); }
   else if (game === "gacha") { show("screen-g-gacha"); }
   else if (game === "aburi") { renderAburi(); show("screen-g-aburi"); }
   else if (game === "mini") { show("screen-g-mini"); }
@@ -1589,43 +1616,40 @@ document.querySelectorAll(".gi-start").forEach(btn =>
 document.querySelectorAll(".gback").forEach(btn =>
   btn.addEventListener("click", () => { renderPlay(); show("screen-play"); }));
 
-function renderTeams() {
+// 選んだ人の既存予想を入力欄に反映
+function renderWcScores() {
   const who = $("vote-who").value;
-  const votes = state.wcVotes || {};
-  $("team-grid").innerHTML = TEAMS.map(t => `
-    <div class="team ${votes[who] === t.name ? "sel" : ""}" data-team="${t.name}">
-      <span class="t-flag">${t.flag}</span>${t.name}
-    </div>`).join("");
-  document.querySelectorAll(".team").forEach(el => {
-    el.addEventListener("click", () => {
-      const w = $("vote-who").value;
-      if (!w) { toast("投票する人を選んでね"); return; }
-      state.wcVotes = state.wcVotes || {};
-      state.wcVotes[w] = el.dataset.team;
-      save();
-      renderTeams();
-      renderVotes();
-      cloudSetWcVote(w, el.dataset.team);
-      toast(`⚽ ${w} は ${el.dataset.team} に投票！`);
-    });
-  });
+  const v = (state.wcVotes || {})[who];
+  $("score-jp").value = v && v.jp != null ? v.jp : "";
+  $("score-tn").value = v && v.tn != null ? v.tn : "";
 }
+$("score-submit").addEventListener("click", () => {
+  const who = $("vote-who").value;
+  if (!who) { toast("投票する人を選んでね"); return; }
+  const jp = parseInt($("score-jp").value, 10);
+  const tn = parseInt($("score-tn").value, 10);
+  if (isNaN(jp) || isNaN(tn) || jp < 0 || tn < 0) { toast("両チームの点数を入れてね"); return; }
+  state.wcVotes = state.wcVotes || {};
+  state.wcVotes[who] = { jp, tn };
+  save();
+  renderVotes();
+  cloudSetWcVote(who, jp, tn);
+  toast(`⚽ ${who}：日本 ${jp} - ${tn} チュニジア で投票！`);
+});
 function renderVotes() {
   const votes = state.wcVotes || {};
-  const rows = Object.entries(votes);
+  const rows = Object.entries(votes).filter(([, v]) => v && typeof v === "object");
   if (rows.length === 0) {
     $("vote-result").innerHTML = '<p class="tip-note">まだ投票がないよ。一番乗りで予想しよう！</p>';
     return;
   }
-  $("vote-result").innerHTML = rows.map(([name, team]) => {
-    const t = TEAMS.find(t => t.name === team);
-    return `<div class="vote-row">
+  $("vote-result").innerHTML = rows.map(([name, v]) => `
+    <div class="vote-row">
       <span class="v-name">${escapeHtml(name)}</span>
-      <span class="v-team">${t ? t.flag : ""} ${escapeHtml(team)}</span>
-    </div>`;
-  }).join("");
+      <span class="v-team">🇯🇵 ${v.jp} - ${v.tn} 🇹🇳</span>
+    </div>`).join("");
 }
-$("vote-who").addEventListener("change", renderTeams);
+$("vote-who").addEventListener("change", renderWcScores);
 
 
 $("btn-play").addEventListener("click", () => {
