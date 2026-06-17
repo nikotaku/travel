@@ -987,11 +987,11 @@ function cloudReloadSoon() {
 async function cloudLoadAll() {
   if (!sb) return;
   const res = await cloud(async s => Promise.all([
-    s.from("members").select("*"),
-    s.from("wc_votes").select("*"),
-    s.from("posts").select("*").order("created_at", { ascending: false }),
-    s.from("aburi_rounds").select("*").order("created_at", { ascending: false }).limit(1),
-    s.from("aburi_answers").select("*")
+    s.from("dev_members").select("*"),
+    s.from("dev_wc_votes").select("*"),
+    s.from("dev_posts").select("*").order("created_at", { ascending: false }),
+    s.from("dev_aburi_rounds").select("*").order("created_at", { ascending: false }).limit(1),
+    s.from("dev_aburi_answers").select("*")
   ]));
   if (!res) return;
   const [mem, wc, ps, ar, aa] = res;
@@ -1034,13 +1034,13 @@ async function cloudLoadAll() {
 
 // 書き込みヘルパー
 const cloudUpsertMember = (name, fields = {}) =>
-  cloud(s => s.from("members").upsert({ name, ...fields }, { onConflict: "name" }));
+  cloud(s => s.from("dev_members").upsert({ name, ...fields }, { onConflict: "name" }));
 const cloudSetChips = (name, chips) =>
-  cloud(s => s.from("members").upsert({ name, chips }, { onConflict: "name" }));
+  cloud(s => s.from("dev_members").upsert({ name, chips }, { onConflict: "name" }));
 const cloudSetWcVote = (voter, jp, tn) =>
-  cloud(s => s.from("wc_votes").upsert({ voter, jp, tn, updated_at: new Date().toISOString() }, { onConflict: "voter" }));
+  cloud(s => s.from("dev_wc_votes").upsert({ voter, jp, tn, updated_at: new Date().toISOString() }, { onConflict: "voter" }));
 const cloudDelWcVote = (voter) =>
-  cloud(s => s.from("wc_votes").delete().eq("voter", voter));
+  cloud(s => s.from("dev_wc_votes").delete().eq("voter", voter));
 
 // リアルタイム購読：誰かが変更したら自動で再読込
 if (sb) {
@@ -1159,9 +1159,9 @@ $("tl-post").addEventListener("click", async () => {
   btn.disabled = true; btn.textContent = "シェア中…";
   try {
     const path = `p/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
-    const up = await sb.storage.from("photos").upload(path, tlBlob, { contentType: "image/jpeg" });
+    const up = await sb.storage.from("dev-photos").upload(path, tlBlob, { contentType: "image/jpeg" });
     if (up.error) throw up.error;
-    const url = sb.storage.from("photos").getPublicUrl(path).data.publicUrl;
+    const url = sb.storage.from("dev-photos").getPublicUrl(path).data.publicUrl;
     const post = {
       id: "t" + Date.now().toString(36),
       author: state.name,
@@ -1169,7 +1169,7 @@ $("tl-post").addEventListener("click", async () => {
       image_url: url,
       storage_path: path
     };
-    const ins = await sb.from("posts").insert(post);
+    const ins = await sb.from("dev_posts").insert(post);
     if (ins.error) throw ins.error;
     resetComposer();
     toast("📸 シェアしました！");
@@ -1188,8 +1188,8 @@ async function deletePost(id) {
   const p = (state.posts || []).find(x => x.id === id);
   if (!p) return;
   if (!confirm("この投稿を削除する？")) return;
-  await cloud(s => s.from("posts").delete().eq("id", id));
-  if (p.path) await cloud(s => s.storage.from("photos").remove([p.path]));
+  await cloud(s => s.from("dev_posts").delete().eq("id", id));
+  if (p.path) await cloud(s => s.storage.from("dev-photos").remove([p.path]));
   state.posts = (state.posts || []).filter(x => x.id !== id);
   save();
   renderFeed();
@@ -1308,8 +1308,8 @@ $("avatar-file").addEventListener("change", async e => {
     let url = null;
     if (sb) {
       const path = `a/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
-      const up = await sb.storage.from("photos").upload(path, blob, { contentType: "image/jpeg" });
-      if (!up.error) url = sb.storage.from("photos").getPublicUrl(path).data.publicUrl;
+      const up = await sb.storage.from("dev-photos").upload(path, blob, { contentType: "image/jpeg" });
+      if (!up.error) url = sb.storage.from("dev-photos").getPublicUrl(path).data.publicUrl;
     }
     if (!url) url = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); });
     state.avatar = url;
@@ -1875,7 +1875,7 @@ async function aburiNewRound() {
   const round = { id: "r" + Date.now().toString(36), topic, revealed: false };
   state.aburi = { ...round, answers: {} };
   save(); renderAburi();
-  await cloud(s => s.from("aburi_rounds").insert(round));
+  await cloud(s => s.from("dev_aburi_rounds").insert(round));
   cloudLoadAll();
 }
 
@@ -1888,7 +1888,7 @@ async function aburiSubmit() {
   a.answers = a.answers || {};
   a.answers[state.name] = ans;
   save(); renderAburi();
-  await cloud(s => s.from("aburi_answers").upsert(
+  await cloud(s => s.from("dev_aburi_answers").upsert(
     { round_id: a.id, member: state.name, answer: ans, updated_at: new Date().toISOString() },
     { onConflict: "round_id,member" }));
   toast("回答しました！");
@@ -1900,7 +1900,7 @@ async function aburiReveal() {
   if (Object.keys(a.answers || {}).length === 0) { toast("まだ誰も回答していないよ"); return; }
   a.revealed = true;
   save(); renderAburi();
-  await cloud(s => s.from("aburi_rounds").update({ revealed: true }).eq("id", a.id));
+  await cloud(s => s.from("dev_aburi_rounds").update({ revealed: true }).eq("id", a.id));
   cloudLoadAll();
 }
 
