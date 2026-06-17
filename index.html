@@ -1660,8 +1660,8 @@ $("btn-play").addEventListener("click", () => {
 $("btn-play-back").addEventListener("click", () => { renderMain(); show("screen-main"); });
 
 /* ---------- 企画のオープン日 ---------- */
-// 動作確認のため現在は全ゲーム解放中。6/20まで再ロックする場合は下を new Date(2026, 5, 20, 0, 0, 0) に戻す
-const PLAY_OPEN = new Date(2026, 0, 1, 0, 0, 0); // 過去日＝常にオープン
+// THE GAMEは6/20 0:00にオープン（それまではカミングスーン）
+const PLAY_OPEN = new Date(2026, 5, 20, 0, 0, 0); // 2026-06-20 00:00 ローカル時間
 function isPlayOpen() {
   return Date.now() >= PLAY_OPEN.getTime();
 }
