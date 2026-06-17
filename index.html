@@ -218,6 +218,27 @@
     background: #3a3c45; color: var(--sub); cursor: not-allowed; letter-spacing: .05em;
   }
   .play-banner .countdown { font-size: 11px; font-weight: 700; color: var(--accent); margin-top: 4px; }
+
+  /* ---------- ゲーム一覧 ---------- */
+  .game-item {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 16px 18px; margin-top: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.3);
+  }
+  .gi-info { flex: 1; min-width: 0; }
+  .gi-title { font-size: 16px; font-weight: 700; color: var(--ink); }
+  .gi-desc { font-size: 12px; color: var(--sub); margin-top: 4px; line-height: 1.5; }
+  .gi-soon { display: none; font-size: 11px; font-weight: 700; color: var(--accent); margin-top: 6px; }
+  .gi-start {
+    flex-shrink: 0; padding: 11px 22px; border: none; border-radius: 999px;
+    background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: #17140d;
+    font-size: 14px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .gi-start:active { opacity: .85; }
+  .game-item.locked { opacity: .7; }
+  .game-item.locked .gi-soon { display: block; }
+  .game-item.locked .gi-start { background: #3a3c45; color: var(--sub); cursor: not-allowed; }
+  .gback { margin-top: 0; margin-bottom: 4px; }
   .team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
   .team {
     padding: 10px 4px; border: 1.5px solid var(--line); border-radius: 12px;
@@ -722,64 +743,95 @@
   <button class="reset" id="btn-reset">最初からやり直す</button>
 </section>
 
-<!-- ④ あそびコーナー（Wカップ予想投票・ミニゲーム） -->
+<!-- ④ THE GAME（ゲーム一覧） -->
 <section id="screen-play" class="screen">
   <div class="greeting">
     <div class="hello">THE GAME ⚽</div>
-    <div class="name">Wカップ予想・トークテーマガチャ・あぶり出し・ミニゲーム</div>
+    <div class="name">遊ぶゲームを選んでね</div>
   </div>
 
-  <div class="card lockable" id="lock-gacha">
-    <div class="lock-overlay">
-      <div class="lo-title">🔒 COMING SOON</div>
-      <div class="lo-sub" id="gacha-sub">6/20オープン予定</div>
+  <div class="game-item" id="hub-gacha">
+    <div class="gi-info">
+      <div class="gi-title">🎤 トークテーマガチャ</div>
+      <div class="gi-desc">回す人をルーレットで決めてテーマをガチャ</div>
+      <div class="gi-soon">🔒 6/20オープン予定</div>
     </div>
-    <div class="lock-inner">
-      <h2>🎤 トークテーマガチャ</h2>
-      <p class="tip-note">ルーレットで「回す人」を決めて、トークテーマをガチャ！会話のきっかけに🎁</p>
-      <div class="gacha-stage">
-        <div class="gacha-member" id="gacha-member">？</div>
-        <div class="gacha-theme" id="gacha-theme" hidden></div>
-      </div>
-      <button class="g-btn full" id="gacha-spin">メンバーを決める！🎯</button>
-      <button class="g-btn full" id="gacha-draw" hidden>テーマを引く！🎁</button>
-      <button class="g-btn ghost full" id="gacha-again" hidden>もう一回</button>
-    </div>
+    <button class="gi-start" data-game="gacha">始める</button>
   </div>
 
-  <div class="card lockable" id="lock-aburi">
-    <div class="lock-overlay">
-      <div class="lo-title">🔒 COMING SOON</div>
-      <div class="lo-sub" id="aburi-sub">6/20オープン予定</div>
+  <div class="game-item" id="hub-aburi">
+    <div class="gi-info">
+      <div class="gi-title">🫣 人間性あぶり出し</div>
+      <div class="gi-desc">「〇〇といえば？」に全員で一斉回答</div>
+      <div class="gi-soon">🔒 6/20オープン予定</div>
     </div>
-    <div class="lock-inner">
-      <h2>🫣 人間性あぶり出し</h2>
-      <p class="tip-note">「〇〇といえば？」のお題に全員が回答。せーの！で一斉オープンして「なんでそれ？」でツッコもう。</p>
-      <div id="aburi-body"></div>
-    </div>
+    <button class="gi-start" data-game="aburi">始める</button>
   </div>
 
-  <div class="card lockable" id="lock-wc">
-    <div class="lock-overlay">
-      <div class="lo-title">🔒 COMING SOON</div>
-      <div class="lo-sub" id="wc-sub">6/20オープン予定</div>
+  <div class="game-item" id="hub-wc">
+    <div class="gi-info">
+      <div class="gi-title">🏆 Wカップ優勝予想</div>
+      <div class="gi-desc">優勝チームをみんなで予想投票</div>
+      <div class="gi-soon">🔒 6/20オープン予定</div>
     </div>
-    <div class="lock-inner">
-      <h2>🏆 Wカップ優勝予想投票</h2>
-      <p class="tip-note">2026 ワールドカップ、優勝するのはどこ？<br>投票する人を選んで、チームをタップ！</p>
-      <label for="vote-who">投票する人</label>
-      <select id="vote-who"></select>
-      <div class="team-grid" id="team-grid"></div>
-      <div id="vote-result"></div>
-    </div>
+    <button class="gi-start" data-game="wc">始める</button>
   </div>
 
-  <div class="card lockable" id="lock-mg">
-    <div class="lock-overlay">
-      <div class="lo-title">🔒 COMING SOON</div>
-      <div class="lo-sub" id="mg-sub">6/20オープン予定</div>
+  <div class="game-item" id="hub-mini">
+    <div class="gi-info">
+      <div class="gi-title">🎮 ミニゲーム</div>
+      <div class="gi-desc">ルーレット・サイコロ・じゃんけん</div>
+      <div class="gi-soon">🔒 6/20オープン予定</div>
     </div>
-    <div class="lock-inner">
+    <button class="gi-start" data-game="mini">始める</button>
+  </div>
+
+  <button class="btn btn-ghost" id="btn-play-back">← しおりに戻る</button>
+</section>
+
+<!-- ゲーム：トークテーマガチャ -->
+<section id="screen-g-gacha" class="screen">
+  <button class="btn btn-ghost gback">← ゲーム一覧</button>
+  <div class="card">
+    <h2>🎤 トークテーマガチャ</h2>
+    <p class="tip-note">ルーレットで「回す人」を決めて、トークテーマをガチャ！会話のきっかけに🎁</p>
+    <div class="gacha-stage">
+      <div class="gacha-member" id="gacha-member">？</div>
+      <div class="gacha-theme" id="gacha-theme" hidden></div>
+    </div>
+    <button class="g-btn full" id="gacha-spin">メンバーを決める！🎯</button>
+    <button class="g-btn full" id="gacha-draw" hidden>テーマを引く！🎁</button>
+    <button class="g-btn ghost full" id="gacha-again" hidden>もう一回</button>
+  </div>
+</section>
+
+<!-- ゲーム：人間性あぶり出し -->
+<section id="screen-g-aburi" class="screen">
+  <button class="btn btn-ghost gback">← ゲーム一覧</button>
+  <div class="card">
+    <h2>🫣 人間性あぶり出し</h2>
+    <p class="tip-note">「〇〇といえば？」のお題に全員が回答。せーの！で一斉オープンして「なんでそれ？」でツッコもう。</p>
+    <div id="aburi-body"></div>
+  </div>
+</section>
+
+<!-- ゲーム：Wカップ予想 -->
+<section id="screen-g-wc" class="screen">
+  <button class="btn btn-ghost gback">← ゲーム一覧</button>
+  <div class="card">
+    <h2>🏆 Wカップ優勝予想投票</h2>
+    <p class="tip-note">2026 ワールドカップ、優勝するのはどこ？<br>投票する人を選んで、チームをタップ！</p>
+    <label for="vote-who">投票する人</label>
+    <select id="vote-who"></select>
+    <div class="team-grid" id="team-grid"></div>
+    <div id="vote-result"></div>
+  </div>
+</section>
+
+<!-- ゲーム：ミニゲーム -->
+<section id="screen-g-mini" class="screen">
+  <button class="btn btn-ghost gback">← ゲーム一覧</button>
+  <div class="card">
     <h2>🎮 ミニゲーム</h2>
     <div class="game-tabs">
       <button class="game-tab" data-g="roulette">🎯 ルーレット</button>
@@ -804,10 +856,7 @@
         <button class="g-btn jk" data-h="2">✋</button>
       </div>
     </div>
-    </div>
   </div>
-
-  <button class="btn btn-ghost" id="btn-play-back">← しおりに戻る</button>
 </section>
 
 <div id="toast"></div>
@@ -897,9 +946,8 @@ function rerenderActive() {
   if ($("screen-main").classList.contains("active")) {
     if (state.members) { renderMemberCards(); }
   }
-  if ($("screen-play").classList.contains("active")) {
-    renderTeams(); renderVotes(); renderAburi();
-  }
+  if ($("screen-g-wc").classList.contains("active")) { renderTeams(); renderVotes(); }
+  if ($("screen-g-aburi").classList.contains("active")) { renderAburi(); }
   if (state.posts) renderFeed();
 }
 
@@ -1516,16 +1564,31 @@ const TEAMS = [
   { flag: "🇺🇸", name: "アメリカ" },   { flag: "🇲🇽", name: "メキシコ" },   { flag: "🇺🇾", name: "ウルグアイ" }
 ];
 
+// ゲーム一覧（ハブ）の表示
 function renderPlay() {
+  applyPlayLocks();
+}
+// Wカップ：投票者セレクトを埋める
+function fillVoteWho() {
   const members = state.members || [];
   $("vote-who").innerHTML = members
     .map(m => `<option ${m.name === state.name ? "selected" : ""}>${escapeHtml(m.name)}</option>`)
     .join("");
-  renderTeams();
-  renderVotes();
-  renderAburi();
-  applyPlayLocks();
 }
+// 個別ゲームを開く
+function openGame(game) {
+  if (!isPlayOpen()) { toast(`🔒 6/20にオープンするよ！${openCountdownText()}`); return; }
+  cloudLoadAll();
+  if (game === "wc") { fillVoteWho(); renderTeams(); renderVotes(); show("screen-g-wc"); }
+  else if (game === "gacha") { show("screen-g-gacha"); }
+  else if (game === "aburi") { renderAburi(); show("screen-g-aburi"); }
+  else if (game === "mini") { show("screen-g-mini"); }
+}
+document.querySelectorAll(".gi-start").forEach(btn =>
+  btn.addEventListener("click", () => openGame(btn.dataset.game)));
+document.querySelectorAll(".gback").forEach(btn =>
+  btn.addEventListener("click", () => { renderPlay(); show("screen-play"); }));
+
 function renderTeams() {
   const who = $("vote-who").value;
   const votes = state.wcVotes || {};
@@ -1590,11 +1653,13 @@ function openCountdownText() {
 // カミングスーン表示を反映（現在は全ゲーム解放中）
 function applyPlayLocks() {
   const open = isPlayOpen();
-  const sub = open ? "" : `6/20オープン予定${openCountdownText() ? "（" + openCountdownText() + "）" : ""}`;
-  const cards = { "lock-wc": "wc-sub", "lock-mg": "mg-sub", "lock-gacha": "gacha-sub", "lock-aburi": "aburi-sub" };
-  Object.entries(cards).forEach(([card, subId]) => {
-    $(card).classList.toggle("locked", !open);
-    if (!open) $(subId).textContent = sub;
+  const sub = open ? "" : `🔒 6/20オープン予定${openCountdownText() ? "（" + openCountdownText() + "）" : ""}`;
+  document.querySelectorAll(".game-item").forEach(it => {
+    it.classList.toggle("locked", !open);
+    const btn = it.querySelector(".gi-start");
+    if (btn) { btn.disabled = !open; btn.textContent = open ? "始める" : "6/20〜"; }
+    const soon = it.querySelector(".gi-soon");
+    if (soon && !open) soon.textContent = sub;
   });
 }
 
