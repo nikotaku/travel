@@ -52,6 +52,29 @@
   }
   .diag-link:active { opacity: .7; }
 
+  /* ---------- アイコン選択 ---------- */
+  .avatar-pick { display: flex; gap: 14px; align-items: flex-start; margin-top: 4px; }
+  .avatar-preview {
+    width: 76px; height: 76px; flex-shrink: 0; border-radius: 50%;
+    border: 2px solid var(--accent); overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px; background: var(--card-2);
+  }
+  .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .avatar-side { flex: 1; min-width: 0; }
+  .avatar-up {
+    display: inline-block; padding: 9px 14px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--card-2); color: var(--ink);
+    font-size: 13px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .icon-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .icon-opt {
+    width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid var(--line);
+    background: var(--card-2); display: flex; align-items: center; justify-content: center;
+    font-size: 20px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .icon-opt.on { border-color: var(--accent); background: var(--accent-soft); }
+
   /* ---------- きゅんポイント等のチップ選択 ---------- */
   .chip-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
   .kyun-sub { font-size: 12px; font-weight: 700; color: var(--sub); margin: 14px 0 2px; }
@@ -376,10 +399,11 @@
     background: var(--card-2);
   }
   .mc-avatar {
-    width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 10px;
+    width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 10px; overflow: hidden;
     display: flex; align-items: center; justify-content: center;
-    font-size: 24px; font-weight: 700; color: #17140d;
+    font-size: 28px; font-weight: 700; color: #17140d;
   }
+  .mc-avatar img { width: 100%; height: 100%; object-fit: cover; }
   .mc-name { font-size: 16px; font-weight: 700; }
   .mc-tags { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
   .mc-stats { margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--sub); }
@@ -436,10 +460,11 @@
     display: flex; align-items: center; gap: 8px; padding: 12px 14px 10px;
   }
   .tl-avatar {
-    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; overflow: hidden;
     display: flex; align-items: center; justify-content: center;
-    font-size: 15px; font-weight: 700; color: #17140d;
+    font-size: 17px; font-weight: 700; color: #17140d;
   }
+  .tl-avatar img { width: 100%; height: 100%; object-fit: cover; }
   .tl-author { font-size: 14px; font-weight: 700; flex: 1; min-width: 0;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tl-time { font-size: 11px; color: var(--sub); flex-shrink: 0; }
@@ -512,6 +537,19 @@
   </div>
   <label for="input-name">ニックネーム</label>
   <input type="text" id="input-name" placeholder="例）たろう" autocomplete="off">
+
+  <label>アイコン（写真アップ or 選択）</label>
+  <div class="avatar-pick">
+    <div class="avatar-preview" id="avatar-preview">🙂</div>
+    <div class="avatar-side">
+      <label class="avatar-up" id="avatar-up">
+        <span id="avatar-up-label">📷 写真をアップ</span>
+        <input type="file" id="avatar-file" accept="image/*" hidden>
+      </label>
+      <div class="icon-grid" id="icon-grid"></div>
+    </div>
+  </div>
+
   <button class="btn" id="btn-name" disabled>つぎへ</button>
 </section>
 
@@ -585,6 +623,27 @@
   </div>
 
   <div class="card">
+    <h2>👥 メンバー</h2>
+    <p class="tip-note">横にスワイプしてみんなのカードを見よう ▸</p>
+    <div class="mem-carousel" id="mem-carousel"></div>
+  </div>
+
+  <div class="card">
+    <h2>📸 タイムライン</h2>
+    <p class="tip-note">旅の思い出を一言そえてシェアしよう。みんなのスマホに届くよ📡</p>
+    <div class="tl-compose">
+      <label class="tl-pick" id="tl-pick">
+        <input type="file" id="tl-file" accept="image/*" hidden>
+        <span id="tl-pick-label">＋ 写真を選ぶ</span>
+        <img id="tl-preview" class="tl-preview" alt="" hidden>
+      </label>
+      <input type="text" id="tl-caption" placeholder="ひとこと添えて…" maxlength="80" autocomplete="off">
+      <button class="tl-share" id="tl-post" disabled>シェアする</button>
+    </div>
+    <div id="tl-feed"></div>
+  </div>
+
+  <div class="card">
     <button class="toggle-head" id="bring-toggle" aria-expanded="false">
       <span>🎒 持ち物を見る</span>
       <span class="toggle-arrow">▼</span>
@@ -603,21 +662,6 @@
       <p>この旅には様々なミッションが用意されています。<br>
          ミッションクリアで素敵な景品も。<br><b>お楽しみに！</b></p>
     </div>
-  </div>
-
-  <div class="card">
-    <h2>📸 タイムライン</h2>
-    <p class="tip-note">旅の思い出を一言そえてシェアしよう。みんなのスマホに届くよ📡</p>
-    <div class="tl-compose">
-      <label class="tl-pick" id="tl-pick">
-        <input type="file" id="tl-file" accept="image/*" hidden>
-        <span id="tl-pick-label">＋ 写真を選ぶ</span>
-        <img id="tl-preview" class="tl-preview" alt="" hidden>
-      </label>
-      <input type="text" id="tl-caption" placeholder="ひとこと添えて…" maxlength="80" autocomplete="off">
-      <button class="tl-share" id="tl-post" disabled>シェアする</button>
-    </div>
-    <div id="tl-feed"></div>
   </div>
 
   <div class="card">
@@ -649,12 +693,6 @@
     <div class="toggle-body" hidden>
       <div id="shop-list"></div>
     </div>
-  </div>
-
-  <div class="card">
-    <h2>👥 メンバー</h2>
-    <p class="tip-note">横にスワイプしてみんなのカードを見よう ▸</p>
-    <div class="mem-carousel" id="mem-carousel"></div>
   </div>
 
   <div class="card">
@@ -890,10 +928,10 @@ async function cloudLoadAll() {
     }
     state.profiles = state.profiles || {};
     mem.data.forEach(r => {
-      if (r.lovetype || r.mbti || r.ideal_date || r.kyun)
+      if (r.lovetype || r.mbti || r.ideal_date || r.kyun || r.avatar)
         state.profiles[r.name] = {
           lovetype: r.lovetype, mbti: r.mbti, idealDate: r.ideal_date,
-          kyun: Array.isArray(r.kyun) ? r.kyun : []
+          kyun: Array.isArray(r.kyun) ? r.kyun : [], avatar: r.avatar || null
         };
     });
   }
@@ -977,11 +1015,15 @@ function renderFeed() {
     feed.innerHTML = '<div class="tl-empty">まだ投稿がないよ。最初の1枚をシェアしよう📷</div>';
     return;
   }
+  const profiles = state.profiles || {};
   feed.innerHTML = posts.map(p => {
     const hue = ([...(p.author || "?")][0].codePointAt(0) * 47) % 360;
+    const av = (profiles[p.author] || {}).avatar || null;
+    const avInner = isImgAvatar(av) ? `<img src="${escapeHtml(av)}" alt="">` : (av || escapeHtml([...(p.author || "?")][0]));
+    const avBg = isImgAvatar(av) ? "var(--card-2)" : `hsl(${hue},55%,62%)`;
     return `<div class="tl-post" data-id="${p.id}">
       <div class="tl-head">
-        <span class="tl-avatar" style="background:hsl(${hue},55%,62%)">${escapeHtml([...(p.author || "?")][0])}</span>
+        <span class="tl-avatar" style="background:${avBg}">${avInner}</span>
         <span class="tl-author">${escapeHtml(p.author || "")}</span>
         <span class="tl-time">${timeAgo(p.at)}</span>
       </div>
@@ -1157,6 +1199,56 @@ $("btn-name").addEventListener("click", () => {
   show("screen-questions");
 });
 
+/* ---------- アイコン（写真アップ or 絵文字選択） ---------- */
+const AVATAR_ICONS = ["😀","😎","🥳","🐱","🐶","🦊","🐻","🐼","🦁","🐯","🐸","🐵","🐰","🦄","🐳","🐧","🍓","🌻","⭐️","🌙","🔥","🍑"];
+function isImgAvatar(a) { return !!a && (a.startsWith("http") || a.startsWith("data:")); }
+function avatarPreviewHTML(a, fallback) {
+  if (isImgAvatar(a)) return `<img src="${escapeHtml(a)}" alt="">`;
+  if (a) return a;                 // 絵文字
+  return escapeHtml(fallback || "🙂");
+}
+function renderIconGrid() {
+  $("icon-grid").innerHTML = AVATAR_ICONS.map(ic =>
+    `<span class="icon-opt ${state.avatar === ic ? "on" : ""}" data-ic="${ic}">${ic}</span>`).join("");
+  $("icon-grid").querySelectorAll(".icon-opt").forEach(el => {
+    el.addEventListener("click", () => {
+      state.avatar = el.dataset.ic;
+      save();
+      refreshAvatarPreview();
+    });
+  });
+}
+function refreshAvatarPreview() {
+  const first = ($("input-name").value.trim()[0]) || "🙂";
+  $("avatar-preview").innerHTML = avatarPreviewHTML(state.avatar, first);
+  $("icon-grid").querySelectorAll(".icon-opt").forEach(el =>
+    el.classList.toggle("on", el.dataset.ic === state.avatar));
+}
+$("avatar-file").addEventListener("change", async e => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  $("avatar-up-label").textContent = "アップ中…";
+  try {
+    const blob = await fileToBlob(file, 360, 0.82);
+    let url = null;
+    if (sb) {
+      const path = `a/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+      const up = await sb.storage.from("photos").upload(path, blob, { contentType: "image/jpeg" });
+      if (!up.error) url = sb.storage.from("photos").getPublicUrl(path).data.publicUrl;
+    }
+    if (!url) url = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); });
+    state.avatar = url;
+    save();
+    refreshAvatarPreview();
+  } catch (err) {
+    console.warn(err); toast("画像を読み込めませんでした");
+  } finally {
+    $("avatar-up-label").textContent = "📷 写真をアップ";
+  }
+});
+$("input-name").addEventListener("input", refreshAvatarPreview);
+renderIconGrid();
+
 /* ---------- ② 質問（プロフィール） ---------- */
 const KYUN_GROUPS = [
   { label: "♀ 女性のきゅんポイント", items: [
@@ -1275,7 +1367,8 @@ function renderMain() {
       lovetype: myProfile.lovetype || state.lovetype || null,
       mbti: myProfile.mbti || state.mbti || null,
       ideal_date: myProfile.idealDate || state.idealDate || null,
-      kyun: myProfile.kyun || state.kyun || []
+      kyun: myProfile.kyun || state.kyun || [],
+      avatar: state.avatar || null
     });
   }
   cloudLoadAll();
@@ -1343,6 +1436,7 @@ $("btn-go-shiori").addEventListener("click", () => {
 $("btn-go-prof").addEventListener("click", () => {
   if (state.name) $("input-name").value = state.name;
   $("btn-name").disabled = !($("input-name").value.trim());
+  refreshAvatarPreview();
   show("screen-name");
 });
 
@@ -1392,6 +1486,11 @@ function renderMemberCards() {
     const v = votes[m.name];
     const t = v ? TEAMS.find(t => t.name === v) : null;
     const hue = ([...m.name][0].codePointAt(0) * 47) % 360;
+    const av = (p && p.avatar) || null;
+    const avatarInner = isImgAvatar(av)
+      ? `<img src="${escapeHtml(av)}" alt="">`
+      : (av || escapeHtml([...m.name][0]));
+    const avatarBg = isImgAvatar(av) ? "var(--card-2)" : `hsl(${hue},55%,62%)`;
     const tags = p
       ? [
           "💘 ラブタイプ: " + (p.lovetype || "-"),
@@ -1401,7 +1500,7 @@ function renderMemberCards() {
         ].map(x => `<span class="tag">${escapeHtml(x)}</span>`).join("")
       : '<span class="tag">プロフィール未登録</span>';
     return `<div class="mem-card">
-      <div class="mc-avatar" style="background:hsl(${hue},55%,62%)">${escapeHtml([...m.name][0])}</div>
+      <div class="mc-avatar" style="background:${avatarBg}">${avatarInner}</div>
       <div class="mc-name">${escapeHtml(m.name)}</div>
       <div class="mc-tags">${tags}</div>
       ${t ? `<div class="mc-stats">⚽ ${t.flag} ${escapeHtml(t.name)}</div>` : ""}
