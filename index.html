@@ -723,9 +723,8 @@
       <span>🎁 ミッション</span><span class="toggle-arrow">▼</span>
     </button>
     <div class="toggle-body mission-inner" hidden>
-      <span class="gift">🎁</span>
-      <p>この旅には様々なミッションが用意されています。<br>
-         ミッションクリアで素敵な景品も。<br><b>お楽しみに！</b></p>
+      <p class="tip-note">ミッションをクリアしたらチェック！素敵な景品があるかも🎁<br>チェックはみんなで共有されます。</p>
+      <div id="mission-list"></div>
     </div>
   </div>
 
@@ -964,6 +963,12 @@ const TRIP = {
     { id: "charger", text: "スマホ充電器",            note: "" },
     { id: "change",  text: "着替え・パジャマ",         note: "1泊分" }
   ],
+  missions: [
+    { id: "m_sa",       text: "SAで買い物をする" },
+    { id: "m_photo",    text: "みんなで写真を撮る" },
+    { id: "m_chamisul", text: "チャミスルゲーム" },
+    { id: "m_hanabi",   text: "花火大会" }
+  ],
   quests: [
     { id: "shopping", title: "海の駅で買い出し",    desc: "車2分の海の駅で海鮮と野菜をゲット",   pts: 10 },
     { id: "checkin",  title: "チェックイン",        desc: "15:00以降に暗証番号でセルフチェックイン", pts: 20 },
@@ -1003,6 +1008,7 @@ async function cloud(fn) {
 function rerenderActive() {
   if ($("screen-main").classList.contains("active")) {
     if (state.members) { renderMemberCards(); }
+    renderMissions();
   }
   if ($("screen-g-wc").classList.contains("active")) { renderWcScores(); renderVotes(); }
   if ($("screen-g-aburi").classList.contains("active")) { renderAburi(); }
@@ -1023,10 +1029,15 @@ async function cloudLoadAll() {
     s.from("wc_votes").select("*"),
     s.from("posts").select("*").order("created_at", { ascending: false }),
     s.from("aburi_rounds").select("*").order("created_at", { ascending: false }).limit(1),
-    s.from("aburi_answers").select("*")
+    s.from("aburi_answers").select("*"),
+    s.from("missions").select("*")
   ]));
   if (!res) return;
-  const [mem, wc, ps, ar, aa] = res;
+  const [mem, wc, ps, ar, aa, ms] = res;
+  if (ms && ms.data) {
+    state.missionDone = {};
+    ms.data.forEach(r => state.missionDone[r.id] = !!r.done);
+  }
   if (mem && mem.data) {
     state.members = mem.data.map(r => ({ name: r.name, chips: r.chips || 0 }));
     // 自分がまだ反映されていなければ表示上は残す
@@ -1073,6 +1084,8 @@ const cloudSetWcVote = (voter, jp, tn) =>
   cloud(s => s.from("wc_votes").upsert({ voter, jp, tn, updated_at: new Date().toISOString() }, { onConflict: "voter" }));
 const cloudDelWcVote = (voter) =>
   cloud(s => s.from("wc_votes").delete().eq("voter", voter));
+const cloudSetMission = (id, done) =>
+  cloud(s => s.from("missions").upsert({ id, done, updated_at: new Date().toISOString() }, { onConflict: "id" }));
 
 // リアルタイム購読：誰かが変更したら自動で再読込
 if (sb) {
@@ -1456,6 +1469,7 @@ function renderMain() {
   renderList("access-list", TRIP.access);
 
   renderBring();
+  renderMissions();
 
   // 自分を最初のメンバーとして登録（プロフ未入力＝名前なしの場合は登録しない）
   state.members = state.members || [];
@@ -1496,6 +1510,27 @@ function renderBring() {
       state.bring[id] = !state.bring[id];
       save();
       renderBring();
+    });
+  });
+}
+
+// ミッション（みんなで共有のチェックリスト）
+function renderMissions() {
+  const done = state.missionDone || {};
+  $("mission-list").innerHTML = TRIP.missions.map(m => `
+    <div class="bring ${done[m.id] ? "on" : ""}" data-id="${m.id}">
+      <span class="b-check">${done[m.id] ? "✓" : ""}</span>
+      <div class="b-text">${escapeHtml(m.text)}</div>
+    </div>`).join("");
+  document.querySelectorAll("#mission-list .bring").forEach(el => {
+    el.addEventListener("click", () => {
+      const id = el.dataset.id;
+      state.missionDone = state.missionDone || {};
+      const next = !state.missionDone[id];
+      state.missionDone[id] = next;
+      save();
+      renderMissions();
+      cloudSetMission(id, next);
     });
   });
 }
