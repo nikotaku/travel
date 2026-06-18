@@ -239,6 +239,26 @@
   .game-item.locked .gi-soon { display: block; }
   .game-item.locked .gi-start { background: #3a3c45; color: var(--sub); cursor: not-allowed; }
   .gback { margin-top: 0; margin-bottom: 4px; }
+  .gback-menu { margin-top: 0; margin-bottom: 4px; }
+
+  /* ---------- 名前選んで再開 ---------- */
+  .pick-item {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    padding: 12px 14px; margin-top: 10px; cursor: pointer; text-align: left;
+    background: var(--card-2); border: 1px solid var(--line); border-radius: 12px;
+    color: var(--ink); -webkit-tap-highlight-color: transparent;
+  }
+  .pick-item:active { border-color: var(--accent); }
+  .pick-av {
+    width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; color: #17140d;
+  }
+  .pick-av img { width: 100%; height: 100%; object-fit: cover; }
+  .pick-name { font-size: 15px; font-weight: 700; flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pick-go { font-size: 12px; font-weight: 700; color: var(--accent); flex-shrink: 0; }
+  .pick-empty { font-size: 13px; color: var(--sub); text-align: center; padding: 18px 0; }
   .team-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
   .team {
     padding: 10px 4px; border: 1.5px solid var(--line); border-radius: 12px;
@@ -559,7 +579,18 @@
     <p id="menu-hello">ようこそ！</p>
   </div>
   <button class="btn" id="btn-go-shiori">📖 しおりを見る</button>
-  <button class="btn btn-ghost" id="btn-go-prof" style="margin-top:14px">✏️ プロフ入力</button>
+  <button class="btn btn-ghost" id="btn-go-prof" style="margin-top:14px">✏️ プロフ入力（新規）</button>
+  <button class="btn btn-ghost" id="btn-go-pick" style="margin-top:14px">👤 登録済みの人はこちら</button>
+</section>
+
+<!-- ⓪''' 登録済みの人：名前を選んで再開 -->
+<section id="screen-pick" class="screen">
+  <button class="btn btn-ghost gback-menu">← もどる</button>
+  <div class="card">
+    <h2>👤 自分を選んでね</h2>
+    <p class="tip-note">別のブラウザやアプリから開いた人は、ここで自分を選ぶと続きから使えます。</p>
+    <div id="pick-list"></div>
+  </div>
 </section>
 
 <!-- ① ニックネーム入力 -->
@@ -975,6 +1006,7 @@ function rerenderActive() {
   }
   if ($("screen-g-wc").classList.contains("active")) { renderWcScores(); renderVotes(); }
   if ($("screen-g-aburi").classList.contains("active")) { renderAburi(); }
+  if ($("screen-pick").classList.contains("active")) { renderPickList(); }
   if (state.posts) renderFeed();
 }
 
@@ -1499,8 +1531,56 @@ function endOpening() {
     ? `おかえりなさい、${state.name}さん 🌤`
     : "ようこそ！下から選んでね";
   show("screen-menu");
+  cloudLoadAll(); // メンバー名簿を先読み（名前選択用）
 }
 $("btn-welcome").addEventListener("click", endOpening);
+
+// メニュー：登録済みの人 → 名前を選んで再開
+$("btn-go-pick").addEventListener("click", () => {
+  renderPickList();
+  show("screen-pick");
+  cloudLoadAll();
+});
+document.querySelectorAll(".gback-menu").forEach(b =>
+  b.addEventListener("click", () => show("screen-menu")));
+
+function renderPickList() {
+  const members = state.members || [];
+  const profiles = state.profiles || {};
+  if (members.length === 0) {
+    $("pick-list").innerHTML = '<p class="pick-empty">まだ登録者がいません。「プロフ入力（新規）」から登録してね。</p>';
+    return;
+  }
+  $("pick-list").innerHTML = members.map(m => {
+    const p = profiles[m.name] || {};
+    const av = p.avatar || null;
+    const inner = isImgAvatar(av) ? `<img src="${escapeHtml(av)}" alt="">` : (av || escapeHtml([...m.name][0]));
+    const hue = ([...m.name][0].codePointAt(0) * 47) % 360;
+    const bg = isImgAvatar(av) ? "var(--card-2)" : `hsl(${hue},55%,62%)`;
+    return `<button class="pick-item" data-name="${escapeHtml(m.name)}">
+      <span class="pick-av" style="background:${bg}">${inner}</span>
+      <span class="pick-name">${escapeHtml(m.name)}</span>
+      <span class="pick-go">これで開く ▸</span>
+    </button>`;
+  }).join("");
+  $("pick-list").querySelectorAll(".pick-item").forEach(el =>
+    el.addEventListener("click", () => pickMe(el.dataset.name)));
+}
+
+// 選んだ名前で自分を復元
+function pickMe(name) {
+  state.name = name;
+  const p = (state.profiles && state.profiles[name]) || {};
+  state.lovetype = p.lovetype || null;
+  state.mbti = p.mbti || null;
+  state.idealDate = p.idealDate || null;
+  state.kyun = Array.isArray(p.kyun) ? p.kyun : [];
+  state.avatar = p.avatar || null;
+  save();
+  toast(`${name} で続けます`);
+  renderMain();
+  show("screen-main");
+}
 
 // メニュー：しおりを見る（プロフ未入力でもOK）
 $("btn-go-shiori").addEventListener("click", () => {
