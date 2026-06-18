@@ -1025,20 +1025,12 @@ function cloudReloadSoon() {
 async function cloudLoadAll() {
   if (!sb) return;
   const res = await cloud(async s => Promise.all([
-<<<<<<< HEAD
     s.from("dev_members").select("*"),
     s.from("dev_wc_votes").select("*"),
     s.from("dev_posts").select("*").order("created_at", { ascending: false }),
     s.from("dev_aburi_rounds").select("*").order("created_at", { ascending: false }).limit(1),
-    s.from("dev_aburi_answers").select("*")
-=======
-    s.from("members").select("*"),
-    s.from("wc_votes").select("*"),
-    s.from("posts").select("*").order("created_at", { ascending: false }),
-    s.from("aburi_rounds").select("*").order("created_at", { ascending: false }).limit(1),
-    s.from("aburi_answers").select("*"),
+    s.from("dev_aburi_answers").select("*"),
     s.from("dev_missions").select("*")
->>>>>>> de61016 (ミッション欄を共有チェックリスト化（SA買い物・写真・チャミスルゲーム・花火大会）)
   ]));
   if (!res) return;
   const [mem, wc, ps, ar, aa, ms] = res;
@@ -1091,13 +1083,9 @@ const cloudSetChips = (name, chips) =>
 const cloudSetWcVote = (voter, jp, tn) =>
   cloud(s => s.from("dev_wc_votes").upsert({ voter, jp, tn, updated_at: new Date().toISOString() }, { onConflict: "voter" }));
 const cloudDelWcVote = (voter) =>
-<<<<<<< HEAD
   cloud(s => s.from("dev_wc_votes").delete().eq("voter", voter));
-=======
-  cloud(s => s.from("wc_votes").delete().eq("voter", voter));
 const cloudSetMission = (id, done) =>
   cloud(s => s.from("dev_missions").upsert({ id, done, updated_at: new Date().toISOString() }, { onConflict: "id" }));
->>>>>>> de61016 (ミッション欄を共有チェックリスト化（SA買い物・写真・チャミスルゲーム・花火大会）)
 
 // リアルタイム購読：誰かが変更したら自動で再読込
 if (sb) {
@@ -1787,8 +1775,8 @@ $("btn-play").addEventListener("click", () => {
 $("btn-play-back").addEventListener("click", () => { renderMain(); show("screen-main"); });
 
 /* ---------- 企画のオープン日 ---------- */
-// 動作確認のため現在は全ゲーム解放中。6/20まで再ロックする場合は下を new Date(2026, 5, 20, 0, 0, 0) に戻す
-const PLAY_OPEN = new Date(2026, 0, 1, 0, 0, 0); // 過去日＝常にオープン
+// THE GAMEは6/20 0:00にオープン（それまではカミングスーン）
+const PLAY_OPEN = new Date(2026, 0, 1, 0, 0, 0); // 開発用：常にオープン
 function isPlayOpen() {
   return Date.now() >= PLAY_OPEN.getTime();
 }
