@@ -1045,8 +1045,13 @@ function rerenderActive() {
     if (state.members) { renderMemberCards(); }
     renderMissions();
   }
-  if ($("screen-g-wc").classList.contains("active")) { renderWcScores(); renderVotes(); }
-  if ($("screen-g-aburi").classList.contains("active")) { renderAburi(); }
+  // スコア予想：入力欄はクラウド更新で消さない（結果リストだけ更新）
+  if ($("screen-g-wc").classList.contains("active")) { renderVotes(); }
+  // あぶり出し：入力中（フォーカス中）は再描画で消さない
+  if ($("screen-g-aburi").classList.contains("active")) {
+    const ae = document.activeElement;
+    if (!ae || ae.id !== "aburi-input") renderAburi();
+  }
   if ($("screen-pick").classList.contains("active")) { renderPickList(); }
   if (state.posts) renderFeed();
 }
