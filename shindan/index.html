@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>人物分析・適性診断シート</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --card:#ffffff; --ink:#20242c; --sub:#6b7280;
+    --accent:#3f5bd9; --accent-soft:#eef1fd; --line:#e4e7ec; --ok:#2e9e6b; --radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#14161b; --card:#1d2027; --ink:#e9ebef; --sub:#9aa1ad; --accent:#8aa0ff; --accent-soft:#242a3d; --line:#333844; }
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.6; -webkit-font-smoothing:antialiased; padding-bottom:120px; }
+  .wrap{ max-width:760px; margin:0 auto; padding:24px 18px; }
+
+  header.top{ text-align:center; padding:28px 12px 8px; }
+  header.top h1{ font-size:24px; letter-spacing:.04em; }
+  header.top .sub{ color:var(--sub); font-size:13px; margin-top:8px; }
+  .whoami{ margin-top:16px; }
+  .whoami input{ text-align:center; font-size:18px; font-weight:700; }
+
+  .prog-wrap{ position:sticky; top:0; z-index:5; background:var(--bg); padding:10px 0 8px; }
+  .prog{ height:6px; background:var(--line); border-radius:999px; overflow:hidden; }
+  .prog span{ display:block; height:100%; width:0; background:var(--accent); transition:width .3s; }
+  .prog-label{ font-size:11px; color:var(--sub); text-align:right; margin-top:4px; }
+
+  .sec{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 18px 8px; margin-top:18px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .sec-h{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .sec-h .num{ flex-shrink:0; width:30px; height:30px; border-radius:9px; background:var(--accent);
+    color:#fff; font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center; }
+  .sec-h h2{ font-size:16px; letter-spacing:.03em; }
+  .sec-note{ font-size:12px; color:var(--sub); margin:2px 0 10px; }
+
+  .q{ padding:11px 0; border-top:1px solid var(--line); }
+  .q:first-of-type{ border-top:none; }
+  .q > label.qlabel{ display:block; font-size:14px; font-weight:600; margin-bottom:7px; }
+  .q .hint{ font-size:11px; color:var(--sub); font-weight:400; margin-left:4px; }
+
+  input[type=text], input[type=number], input[type=date], select, textarea{
+    width:100%; padding:10px 12px; font-size:15px; color:var(--ink);
+    background:var(--card); border:1.5px solid var(--line); border-radius:10px; outline:none;
+    font-family:inherit; -webkit-appearance:none; appearance:none;
+  }
+  input:focus, select:focus, textarea:focus{ border-color:var(--accent); }
+  textarea{ min-height:70px; resize:vertical; line-height:1.6; }
+  .unit{ display:inline-flex; align-items:center; gap:8px; }
+  .unit input{ flex:1; }
+  .unit .u{ font-size:13px; color:var(--sub); flex-shrink:0; }
+
+  /* 1-5 セグメント */
+  .scale{ display:flex; gap:6px; }
+  .scale label{ flex:1; }
+  .scale input{ position:absolute; opacity:0; pointer-events:none; }
+  .scale span{ display:block; text-align:center; padding:9px 0; font-weight:700; font-size:14px;
+    border:1.5px solid var(--line); border-radius:9px; cursor:pointer; color:var(--sub); }
+  .scale input:checked + span{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .scale-ends{ display:flex; justify-content:space-between; font-size:10px; color:var(--sub); margin-top:4px; }
+
+  /* 0-10 スライダー */
+  .score{ display:flex; align-items:center; gap:12px; }
+  .score input[type=range]{ flex:1; accent-color:var(--accent); }
+  .score .val{ flex-shrink:0; width:44px; text-align:center; font-weight:800; font-size:18px; color:var(--accent); }
+
+  /* ランキング */
+  .rank-item{ display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px dashed var(--line); }
+  .rank-item:last-child{ border-bottom:none; }
+  .rank-item .rn{ width:64px; flex-shrink:0; }
+  .rank-item .rn input{ text-align:center; padding:8px; }
+  .rank-item .rl{ font-size:14px; }
+
+  /* チェック */
+  .checks{ display:flex; flex-wrap:wrap; gap:8px; }
+  .checks label{ cursor:pointer; }
+  .checks input{ position:absolute; opacity:0; pointer-events:none; }
+  .checks span{ display:block; font-size:13px; font-weight:600; padding:8px 14px; border-radius:999px;
+    border:1.5px solid var(--line); color:var(--sub); }
+  .checks input:checked + span{ background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
+
+  .subhead{ font-size:13px; font-weight:800; color:var(--accent); margin:14px 0 2px; letter-spacing:.05em; }
+
+  /* 下部バー */
+  .bar{ position:fixed; left:0; right:0; bottom:0; z-index:20; background:var(--card);
+    border-top:1px solid var(--line); padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    display:flex; gap:8px; max-width:760px; margin:0 auto; }
+  .bar button{ flex:1; padding:12px 6px; border:none; border-radius:10px; font-size:13px; font-weight:700;
+    cursor:pointer; font-family:inherit; }
+  .bar .primary{ background:var(--accent); color:#fff; }
+  .bar .ghost{ background:var(--bg); color:var(--ink); border:1px solid var(--line); }
+  .saved-note{ text-align:center; font-size:11px; color:var(--ok); height:14px; margin-top:6px; }
+
+  #toast{ position:fixed; left:50%; bottom:86px; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:var(--card); font-size:13px; font-weight:700; padding:11px 20px;
+    border-radius:999px; opacity:0; transition:all .3s; pointer-events:none; z-index:30; }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  @media print{
+    .bar,.prog-wrap,.saved-note,#toast,.hint-print{ display:none !important; }
+    body{ background:#fff; padding:0; } .sec{ box-shadow:none; break-inside:avoid; }
+    input,select,textarea{ border-color:#bbb; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>人物分析・適性診断シート</h1>
+    <div class="sub">〜「その人は収まるべきところに収まる」を見極めるための質問集〜</div>
+    <div class="whoami">
+      <input type="text" id="who" placeholder="ニックネームを入力" autocomplete="off">
+    </div>
+  </header>
+
+  <div class="prog-wrap">
+    <div class="prog"><span id="prog-bar"></span></div>
+    <div class="prog-label" id="prog-label">0% 記入済み</div>
+  </div>
+
+  <form id="form"></form>
+  <div class="saved-note" id="saved-note"></div>
+</div>
+
+<div class="bar">
+  <button class="ghost" id="btn-print">🖨 印刷 / PDF</button>
+  <button class="ghost" id="btn-copy">📋 コピー</button>
+  <button class="primary" id="btn-download">⬇︎ 保存(txt)</button>
+  <button class="ghost" id="btn-reset">↺ 消去</button>
+</div>
+<div id="toast"></div>
+
+<script>
+/* =====================================================
+   質問スキーマ
+   type: text / area / date / num / select / scale(1-5) / score(0-10) / rank / checks / subhead
+===================================================== */
+const MBTI = ["建築家（INTJ）","論理学者（INTP）","指揮官（ENTJ）","討論者（ENTP）","提唱者（INFJ）","仲介者（INFP）","主人公（ENFJ）","運動家（ENFP）","管理者（ISTJ）","擁護者（ISFJ）","幹部（ESTJ）","領事官（ESFJ）","巨匠（ISTP）","冒険家（ISFP）","起業家（ESTP）","エンターテイナー（ESFP）","わからない"];
+const ENNEA = ["タイプ1 改革する人","タイプ2 助ける人","タイプ3 達成する人","タイプ4 個性的な人","タイプ5 調べる人","タイプ6 忠実な人","タイプ7 熱中する人","タイプ8 挑戦する人","タイプ9 平和をもとめる人","わからない"];
+const BLOOD = ["A型","B型","O型","AB型","わからない"];
+const YN = ["はい","いいえ","どちらともいえない"];
+const VALUES = ["お金","恋愛","家族","仕事","自由","成長","健康","趣味","承認","安定","仲間","時間"];
+const JOBS = ["営業","接客","企画","事務","管理","クリエイティブ","肉体労働","一人作業","チーム作業","リーダー","サポート役"];
+const PLACES = ["経営者","個人事業","フリーランス","大企業","ベンチャー","公務員","営業","接客","裏方","管理職","企画職","技術職","クリエイター","職人"];
+
+const S = (label,type,extra={}) => ({label,type,...extra});
+
+const SECTIONS = [
+ { title:"基本情報", items:[
+   S("ニックネーム","text"), S("年齢","num",{max:120,u:"歳"}), S("生年月日","date"),
+   S("居住地","text"), S("職業","text"), S("最終学歴","text"), S("身長","num",{max:250,u:"cm"}),
+   S("MBTI","select",{opts:MBTI}), S("エニアグラム（分かれば）","select",{opts:ENNEA}),
+   S("ラブタイプ","text"), S("血液型（参考）","select",{opts:BLOOD}),
+ ]},
+ { title:"今の自分", items:[
+   S("今の人生の満足度","score"), S("今の仕事の満足度","score"), S("恋愛の満足度","score"),
+   S("健康状態","score"), S("将来への期待度","score"), S("今、一番悩んでいること","area"),
+ ]},
+ { title:"性格・思考", items:[
+   S("行動スタイル","select",{opts:["まず行動する","考えてから行動する","場合による"]}),
+   S("思考タイプ","select",{opts:["感情派","論理派","両方"]}),
+   S("進め方","select",{opts:["計画派","直感派","両方"]}),
+   S("スタンス","select",{opts:["安定派","挑戦派","両方"]}),
+   S("人付き合い","select",{opts:["一人が好き","みんなが好き","両方"]}),
+   S("生活リズム","select",{opts:["朝型","夜型","不規則"]}),
+   S("好きな言葉","text"), S("嫌いな言葉","text"), S("人生で一番大切にしていること","area"),
+ ]},
+ { title:"価値観ランキング", note:"大切な順に 1〜12 を入力してください。", items:[
+   S("価値観の順位","rank",{opts:VALUES}),
+ ]},
+ { title:"仕事・適性", items:[
+   S("現在の仕事","text"), S("転職回数","num",{u:"回"}),
+   S("今まで一番楽しかった仕事","area"), S("逆につらかった仕事","area"),
+   S("得意な仕事","area"), S("苦手な仕事","area"),
+   S("適性の自己評価（5段階）","subhead"),
+   ...JOBS.map(j=>S(j,"scale")),
+ ]},
+ { title:"人間関係", items:[
+   S("親友は何人？","text"), S("相談できる人は？","text"), S("尊敬する人は？","text"),
+   S("苦手なタイプ","area"), S("好きなタイプ","area"),
+   S("初対面は得意？","select",{opts:YN}), S("リーダーになることが多い？","select",{opts:YN}),
+   S("人に頼ることは得意？","select",{opts:YN}), S("人から相談されることは多い？","select",{opts:YN}),
+ ]},
+ { title:"恋愛", items:[
+   S("最後に恋人がいたのは？","text"), S("交際人数","text"), S("最後に別れた理由","area"),
+   S("最後にデートしたのは？","text"), S("最後に性行為をしたのは？（任意）","text"),
+   S("告白した回数","num",{u:"回"}), S("告白された回数","num",{u:"回"}),
+   S("浮気したことは？","select",{opts:YN}), S("浮気されたことは？","select",{opts:YN}),
+   S("結婚願望","select",{opts:["ある","ない","わからない"]}),
+   S("子どもは欲しい？","select",{opts:["欲しい","欲しくない","わからない"]}),
+   S("魅力的だと思う異性の特徴","area"), S("苦手な異性の特徴","area"),
+   S("恋愛では追う派？追われる派？","select",{opts:["追う派","追われる派","両方"]}),
+   S("束縛は平気？","select",{opts:["平気","苦手","ほどほどなら"]}), S("理想のパートナー像","area"),
+ ]},
+ { title:"生活習慣", items:[
+   S("起床時間","text"), S("就寝時間","text"), S("平均睡眠時間","num",{u:"時間",step:"0.5"}),
+   S("運動頻度","text"), S("食生活","text"),
+   S("お酒","select",{opts:["飲まない","たまに","よく飲む","毎日"]}),
+   S("タバコ","select",{opts:["吸わない","たまに","吸う"]}),
+   S("ギャンブル","select",{opts:["しない","たまに","する"]}),
+   S("スマホ利用時間","text"), S("休日の過ごし方","area"),
+   S("月に何人くらい新しい人と会う？","text"), S("最近一番お金を使ったもの","text"),
+   S("部屋は綺麗？","select",{opts:YN}), S("財布の中は整理されてる？","select",{opts:YN}),
+ ]},
+ { title:"お金", items:[
+   S("年収","text"), S("貯金","text"), S("借金","text"),
+   S("投資経験","select",{opts:["ある","ない"]}), S("毎月自由に使える金額","text"),
+   S("一番お金を使いたいもの","text"), S("お金が増えたら何をしたい？","area"),
+ ]},
+ { title:"人生経験", items:[
+   S("人生で一番嬉しかったこと","area"), S("人生で一番辛かったこと","area"),
+   S("人生最大の失敗","area"), S("人生最大の成功","area"), S("人生最大の挑戦","area"),
+   S("一番後悔していること","area"), S("人生を変えた出来事","area"),
+   S("人生を変えた本","text"), S("人生を変えた人物","text"),
+ ]},
+ { title:"メンタル", items:[
+   S("ストレス発散方法","area"),
+   S("怒る頻度","select",{opts:["ほぼない","たまに","よくある"]}),
+   S("落ち込む頻度","select",{opts:["ほぼない","たまに","よくある"]}),
+   S("立ち直る速さ","select",{opts:["早い","普通","遅い"]}),
+   S("自己肯定感","score"),
+   S("プレッシャーには強い？","select",{opts:YN}), S("孤独は平気？","select",{opts:YN}),
+ ]},
+ { title:"将来", items:[
+   S("5年後どうなっていたい？","area"), S("10年後どうなっていたい？","area"),
+   S("理想の生活","area"), S("理想の仕事","text"), S("理想の休日","text"),
+   S("住みたい場所","text"), S("年収目標","text"), S("人生でやり遂げたいこと","area"),
+ ]},
+ { title:"理想と現実", items:[
+   S("仕事","subhead"), S("理想の仕事","text"), S("現在の仕事","text"),
+   S("年収","subhead"), S("理想の年収","text"), S("現在の年収","text"),
+   S("恋愛","subhead"), S("理想の恋人","text"), S("最後に恋人がいた時期","text"),
+   S("健康","subhead"), S("理想の体型","text"), S("現在の運動習慣","text"),
+   S("生活","subhead"), S("理想の休日","text"), S("現在の休日","text"),
+   S("人間関係","subhead"), S("理想の人間関係","text"), S("現在の人間関係","text"),
+   S("性格","subhead"), S("理想の自分","text"), S("現在の自分","text"),
+ ]},
+ { title:"自己分析", items:[
+   S("自分の長所3つ","area"), S("自分の短所3つ","area"),
+   S("周りからよく言われること","area"), S("自分を動物に例えると？","text"),
+   S("自分を色に例えると？","text"),
+   S("自分は運が良いと思う？","select",{opts:YN}),
+   S("人生は自分で変えられると思う？","select",{opts:YN}),
+ ]},
+ { title:"収まるべき場所診断", items:[
+   S("一番力を発揮できるのは？（複数選択可）","checks",{opts:PLACES}),
+   S("どんな環境だと頑張れる？","area"), S("どんな環境だと辞めたくなる？","area"),
+   S("理想の上司は？","area"), S("理想の部下は？","area"),
+   S("どんな人と一緒にいると伸びる？","area"), S("逆にどんな人とは合わない？","area"),
+ ]},
+ { title:"第三者評価", note:"友人・同僚・恋人などが記入してください。", items:[
+   S("第一印象","area"), S("今の印象","area"), S("長所","area"), S("短所","area"),
+   S("信頼度","score"),
+   S("また一緒に仕事したい？","select",{opts:YN}), S("また一緒に遊びたい？","select",{opts:YN}),
+   S("恋人に向いている？","select",{opts:YN}), S("リーダーに向いている？","select",{opts:YN}),
+   S("一言で表すと？","text"),
+ ]},
+ { title:"最後の質問", items:[
+   S("あなたは何のために生きていますか？","area"),
+   S("人生で一番失いたくないものは？","area"),
+   S("もし余命があと1年なら何をしますか？","area"),
+   S("あなたが本当に欲しいものは何ですか？","area"),
+   S("あなたは、自分らしく生きられていますか？その理由は？","area"),
+   S("あなたはどんな人として覚えられたいですか？","area"),
+ ]},
+];
+
+/* =====================================================
+   レンダリング & 保存
+===================================================== */
+const KEY="shindan-v1";
+const $=(id)=>document.getElementById(id);
+const data=JSON.parse(localStorage.getItem(KEY)||"{}");
+const esc=(s)=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let saveTimer=null;
+function save(){
+  localStorage.setItem(KEY,JSON.stringify(data));
+  clearTimeout(saveTimer);
+  $("saved-note").textContent="自動保存しました ✓";
+  saveTimer=setTimeout(()=>$("saved-note").textContent="",1500);
+  updateProgress();
+}
+
+// ID採番（位置ベース）
+const idOf=(si,ii)=>`q_${si}_${ii}`;
+
+function render(){
+  const f=$("form");
+  f.innerHTML=SECTIONS.map((sec,si)=>{
+    const inner=sec.items.map((it,ii)=>{
+      const id=idOf(si,ii);
+      if(it.type==="subhead") return `<div class="subhead">【${esc(it.label)}】</div>`;
+      const hint=it.hint?`<span class="hint">${esc(it.hint)}</span>`:"";
+      return `<div class="q"><label class="qlabel" for="${id}">${esc(it.label)}${hint}</label>${control(it,id)}</div>`;
+    }).join("");
+    return `<section class="sec"><div class="sec-h"><div class="num">${si+1}</div><h2>${esc(sec.title)}</h2></div>${sec.note?`<div class="sec-note">${esc(sec.note)}</div>`:""}${inner}</section>`;
+  }).join("");
+  restore();
+  updateProgress();
+}
+
+function control(it,id){
+  const v=data[id];
+  switch(it.type){
+    case "text": return `<input type="text" id="${id}" data-id="${id}" data-type="v" autocomplete="off">`;
+    case "date": return `<input type="date" id="${id}" data-id="${id}" data-type="v">`;
+    case "area": return `<textarea id="${id}" data-id="${id}" data-type="v"></textarea>`;
+    case "num": return `<div class="unit"><input type="number" id="${id}" data-id="${id}" data-type="v" ${it.max?`max="${it.max}"`:""} min="0" ${it.step?`step="${it.step}"`:""} inputmode="decimal">${it.u?`<span class="u">${esc(it.u)}</span>`:""}</div>`;
+    case "select": return `<select id="${id}" data-id="${id}" data-type="v"><option value="">選んでください</option>${it.opts.map(o=>`<option>${esc(o)}</option>`).join("")}</select>`;
+    case "score": return `<div class="score"><input type="range" id="${id}" data-id="${id}" data-type="v" min="0" max="10" step="1" value="${v!=null&&v!==""?v:0}"><span class="val" id="${id}_v">${v!=null&&v!==""?v:0}</span>/10</div>`;
+    case "scale": {
+      const ends=`<div class="scale-ends"><span>苦手</span><span>得意</span></div>`;
+      return `<div class="scale">${[1,2,3,4,5].map(n=>`<label><input type="radio" name="${id}" value="${n}" data-id="${id}" data-type="v"><span>${n}</span></label>`).join("")}</div>${ends}`;
+    }
+    case "rank": return it.opts.map(o=>`<div class="rank-item"><div class="rn"><input type="number" min="1" max="${it.opts.length}" data-id="${id}" data-type="rank" data-opt="${esc(o)}" inputmode="numeric" placeholder="順位"></div><div class="rl">${esc(o)}</div></div>`).join("");
+    case "checks": return `<div class="checks">${it.opts.map(o=>`<label><input type="checkbox" value="${esc(o)}" data-id="${id}" data-type="checks" data-opt="${esc(o)}"><span>${esc(o)}</span></label>`).join("")}</div>`;
+    default: return "";
+  }
+}
+
+function restore(){
+  $("who").value=data.__who||"";
+  for(const el of document.querySelectorAll("[data-id]")){
+    const id=el.dataset.id, t=el.dataset.type;
+    if(t==="v"){
+      if(el.type==="radio"){ if(String(data[id])===el.value) el.checked=true; }
+      else { if(data[id]!=null) el.value=data[id]; if(el.type==="range"){ const vv=$(id+"_v"); if(vv) vv.textContent=el.value; } }
+    } else if(t==="rank"){ const m=data[id]||{}; if(m[el.dataset.opt]!=null) el.value=m[el.dataset.opt]; }
+    else if(t==="checks"){ if((data[id]||[]).includes(el.dataset.opt)) el.checked=true; }
+  }
+}
+
+function handle(el){
+  if(el===$("who")){ data.__who=el.value; save(); return; }
+  const id=el.dataset.id; if(!id) return;
+  const t=el.dataset.type;
+  if(t==="v"){
+    if(el.type==="radio"){ data[id]=el.value; }
+    else { data[id]=el.value; if(el.type==="range"){ const vv=$(id+"_v"); if(vv) vv.textContent=el.value; } }
+  } else if(t==="rank"){ data[id]=data[id]||{}; if(el.value==="") delete data[id][el.dataset.opt]; else data[id][el.dataset.opt]=el.value; }
+  else if(t==="checks"){ const set=new Set(data[id]||[]); el.checked?set.add(el.dataset.opt):set.delete(el.dataset.opt); data[id]=[...set]; }
+  save();
+}
+document.addEventListener("input",e=>handle(e.target));
+document.addEventListener("change",e=>handle(e.target));
+
+/* 進捗 */
+function isFilled(it,id){
+  if(it.type==="subhead") return null;
+  const v=data[id];
+  if(it.type==="rank") return v&&Object.keys(v).length>0;
+  if(it.type==="checks") return v&&v.length>0;
+  if(it.type==="score") return v!=null&&v!=="";
+  return v!=null&&String(v).trim()!=="";
+}
+function updateProgress(){
+  let total=0,done=0;
+  SECTIONS.forEach((sec,si)=>sec.items.forEach((it,ii)=>{ const r=isFilled(it,idOf(si,ii)); if(r!==null){ total++; if(r) done++; } }));
+  const pct=total?Math.round(done/total*100):0;
+  $("prog-bar").style.width=pct+"%";
+  $("prog-label").textContent=`${pct}% 記入済み（${done}/${total}）`;
+}
+
+/* 出力 */
+function buildText(){
+  const who=(data.__who||"").trim();
+  const lines=["人物分析・適性診断シート", who?`対象：${who}`:"", "="+"=".repeat(30)];
+  SECTIONS.forEach((sec,si)=>{
+    lines.push("", `■ ${si+1}. ${sec.title}`);
+    sec.items.forEach((it,ii)=>{
+      const id=idOf(si,ii), v=data[id];
+      if(it.type==="subhead"){ lines.push(`【${it.label}】`); return; }
+      let out="";
+      if(it.type==="rank"){ const m=v||{}; out=it.opts.slice().sort((a,b)=>(m[a]||99)-(m[b]||99)).filter(o=>m[o]).map(o=>`${m[o]}.${o}`).join(" / "); }
+      else if(it.type==="checks"){ out=(v||[]).join(" / "); }
+      else if(it.type==="score"){ out=(v!=null&&v!=="")?`${v}/10`:""; }
+      else if(it.type==="scale"){ out=(v!=null&&v!=="")?`${v}/5`:""; }
+      else { out=(v==null)?"":String(v); }
+      lines.push(`・${it.label}：${out}`);
+    });
+  });
+  return lines.filter(x=>x!==undefined).join("\n");
+}
+function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),1800); }
+
+$("btn-copy").addEventListener("click",async()=>{
+  const txt=buildText();
+  try{ await navigator.clipboard.writeText(txt); toast("コピーしました📋"); }
+  catch{ const ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); toast("コピーしました📋"); }
+});
+$("btn-download").addEventListener("click",()=>{
+  const who=(data.__who||"シート").trim().replace(/[\\/:*?"<>|]/g,"");
+  const blob=new Blob([buildText()],{type:"text/plain;charset=utf-8"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`診断シート_${who||"無題"}.txt`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); toast("保存しました⬇︎");
+});
+$("btn-print").addEventListener("click",()=>window.print());
+$("btn-reset").addEventListener("click",()=>{
+  if(confirm("入力した内容をすべて消去します。よろしいですか？")){ localStorage.removeItem(KEY); location.reload(); }
+});
+
+render();
+</script>
+</body>
+</html>
