@@ -118,7 +118,7 @@ function renderPrepProgress(saved) {
   $('#prep-progress').value = done;
   if (saved !== undefined) $('#prep-save-status').textContent = saved ? 'この端末・ブラウザーに保存しました。' : '保存できませんでした。この画面を閉じると変更が失われる場合があります。';
 }
-$('[data-checklist] input').forEach(input => {
+$$('[data-checklist] input').forEach(input => {
   input.checked = state.checks.includes(input.value);
   input.addEventListener('change', () => {
     state.checks = input.checked ? [...new Set([...state.checks, input.value])] : state.checks.filter(value => value !== input.value);
