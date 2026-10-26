@@ -111,7 +111,7 @@ $$('[data-hotel]').forEach(button => button.addEventListener('click', () => {
 renderHotel();
 
 function renderPrepProgress(saved) {
-  const inputs = $('#stage-prep [data-checklist] input');
+  const inputs = $$('#stage-prep [data-checklist] input');
   const done = inputs.filter(input => input.checked).length;
   $('#prep-count').textContent = `${done} / ${inputs.length} 完了`;
   $('#prep-progress').max = inputs.length;
