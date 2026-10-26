@@ -2,8 +2,8 @@
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-const stages = ['before', 'flight', 'arrival', 'day2'];
-const labels = { before: '出発前', flight: '飛行機', arrival: '到着後', day2: '2日目' };
+const stages = ['prep', 'before', 'flight', 'arrival', 'day2'];
+const labels = { prep: '準備編', before: '出発前', flight: '飛行機', arrival: '到着後', day2: '2日目' };
 const storageKey = 'hk2026-stage-guide';
 
 function readState() {
@@ -28,6 +28,7 @@ function saveState() {
 }
 
 function suggestedStage(now = new Date()) {
+  if (now.getTime() < Date.parse('2026-10-27T15:00:00Z')) return 'prep';
   const depart = Date.parse('2026-10-28T23:05:00Z');
   const arrive = Date.parse('2026-10-29T03:45:00Z');
   const dayTwo = Date.parse('2026-10-29T16:00:00Z');
@@ -109,13 +110,23 @@ $$('[data-hotel]').forEach(button => button.addEventListener('click', () => {
 }));
 renderHotel();
 
-$$('[data-checklist] input').forEach(input => {
+function renderPrepProgress(saved) {
+  const inputs = $('#stage-prep [data-checklist] input');
+  const done = inputs.filter(input => input.checked).length;
+  $('#prep-count').textContent = `${done} / ${inputs.length} 完了`;
+  $('#prep-progress').max = inputs.length;
+  $('#prep-progress').value = done;
+  if (saved !== undefined) $('#prep-save-status').textContent = saved ? 'この端末・ブラウザーに保存しました。' : '保存できませんでした。この画面を閉じると変更が失われる場合があります。';
+}
+$('[data-checklist] input').forEach(input => {
   input.checked = state.checks.includes(input.value);
   input.addEventListener('change', () => {
     state.checks = input.checked ? [...new Set([...state.checks, input.value])] : state.checks.filter(value => value !== input.value);
-    saveState();
+    const saved = saveState();
+    renderPrepProgress(saved);
   });
 });
+renderPrepProgress();
 
 const drawer = $('#trip-drawer');
 $('#open-drawer').addEventListener('click', () => drawer.showModal());
