@@ -2,8 +2,8 @@
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-const stages = ['prep', 'before', 'flight', 'arrival', 'day2'];
-const labels = { prep: '準備編', before: '出発前', flight: '飛行機', arrival: '到着後', day2: '2日目' };
+const stages = ['prep', 'before', 'flight', 'arrival', 'day2', 'tickets'];
+const labels = { prep: '準備編', before: '出発前', flight: '飛行機', arrival: '到着後', day2: '2日目', tickets: 'eチケット' };
 const storageKey = 'hk2026-stage-guide';
 
 function readState() {

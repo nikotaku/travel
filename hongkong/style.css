@@ -291,3 +291,28 @@ textarea { width: 100%; resize: vertical; border: 1px solid var(--line-light); b
 #stage-prep .checklist label { font-size:14px; line-height:1.8; min-height:80px; }
 #stage-prep .checklist input { width:22px; height:22px; margin-top:3px; }
 @media(max-width:580px) { .prep-summary { padding:20px; } .prep-summary strong { font-size:21px; } }
+
+.stage-nav { grid-template-columns:repeat(6,minmax(0,1fr)); width:min(760px,calc(100% - 16px)); }
+.entrance-prep { grid-column:auto; }
+.ticket-notice { margin:28px 0; padding:24px; background:#172023; border-left:5px solid var(--yellow); font-size:14px; }
+.ticket-notice b { color:var(--yellow); } .ticket-notice .fineprint { color:#bdc9c6; }
+.wallet-status { padding:12px 0; font-size:13px; color:#c8d4d1; }
+.ticket-slot { padding:20px 0; border-top:1px solid var(--line-light); }
+.ticket-slot h3 { font-size:25px; margin:6px 0; overflow-wrap:anywhere; }
+.ticket-slot p { font-size:14px; } .ticket-label { font-weight:900; color:#b62b12; }
+.ticket-route { font-weight:800; } .ticket-files { display:grid; gap:12px; margin:18px 0; }
+.ticket-file { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:16px; background:#fff; border:1px solid #a0aba5; }
+.ticket-file > div { flex:1; min-width:160px; overflow-wrap:anywhere; } .ticket-file small { display:block; color:#506158; }
+.upload-button { cursor:pointer; position:relative; }
+.upload-button input { position:absolute; width:1px; height:1px; opacity:0; }
+.upload-button:focus-within { outline:3px solid var(--red); }
+.unlock-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
+.unlock-row input { min-width:180px; flex:1; padding:12px; border:1px solid #63716a; color:#111; background:#fff; font:16px monospace; }
+#ticket-viewer { width:min(100%,1000px); margin:auto; }
+#ticket-viewer .drawer-head h2 { font-size:18px; }
+.viewer-actions { display:flex; gap:12px; flex-wrap:wrap; padding:16px; background:#f2f0e8; }
+#ticket-viewer-body { overflow:auto; height:calc(100% - 160px); background:#d8d8d8; }
+#ticket-viewer-body img { display:block; width:100%; height:auto; }
+#ticket-viewer-body.zoomed img { width:1400px; max-width:none; }
+#ticket-viewer-body iframe { width:100%; height:100%; border:0; }
+@media(max-width:580px) { .stage-nav button { font-size:10px; white-space:nowrap; } .ticket-slot h3 { font-size:22px; } .ticket-file .button { min-height:44px; } }
