@@ -1,8 +1,8 @@
 'use strict';
 (() => {
   const status = document.querySelector('#wallet-status');
-  const slots = ['outbound', 'inbound', 'osaka', 'hongkong'];
-  const names = {outbound:'往路搭乗用', inbound:'復路搭乗用', osaka:'大阪ホテル', hongkong:'香港ホテル'};
+  const slots = ['outbound', 'inbound', 'osaka', 'hongkong', 'cruise'];
+  const names = {outbound:'往路搭乗用', inbound:'復路搭乗用', osaka:'大阪ホテル', hongkong:'香港ホテル', cruise:'遊覧船'};
   const viewer = document.querySelector('#ticket-viewer');
   const body = document.querySelector('#ticket-viewer-body');
   let currentUrl;
@@ -72,15 +72,15 @@
         row.append(info,open,remove); host.append(row);
       });
     }
-    document.querySelector('#ticket-unlock').hidden = files.some(r=>r.id==='original-outbound') && files.some(r=>r.id==='original-inbound') && files.some(r=>r.id==='original-hongkong');
+    document.querySelector('#ticket-unlock').hidden = files.some(r=>r.id==='original-outbound') && files.some(r=>r.id==='original-inbound') && files.some(r=>r.id==='original-hongkong') && files.some(r=>r.id==='original-cruise');
     status.textContent=files.length ? files.length+'件の控えをこの端末に保存済み。原本を開いて確認してください。' : '控えは未保存です。取り込み後は同じ端末で開けます。';
   }
   const decode = value => Uint8Array.from(atob(value),c=>c.charCodeAt(0));
   document.querySelector('#unlock-form').addEventListener('submit',async e=>{
     e.preventDefault(); const button=e.target.querySelector('button'); button.disabled=true;
-    status.textContent='航空券・ホテルの原本を確認・保存しています…';
+    status.textContent='航空券・ホテル・遊覧船の原本を確認・保存しています…';
     try {
-      const response=await fetch('./tickets.enc.json?v=9'); if(!response.ok) throw new Error('network');
+      const response=await fetch('./tickets.enc.json?v=12'); if(!response.ok) throw new Error('network');
       const bundle=await response.json();
       const code=document.querySelector('#ticket-code').value.replace(/[\s-]/g,'').toLowerCase();
       const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(code),'PBKDF2',false,['deriveKey']);
