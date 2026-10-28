@@ -71,7 +71,7 @@ window.addEventListener('popstate', () => openStage(location.hash.slice(1), { fr
 function renderHotel() {
   const host = $('#selected-hotel');
   host.className = 'selected-hotel';
-  host.innerHTML = `<small>宿泊先確定（ユーザー指定）</small><h3>アジアホテル 香港 / Asia Inn</h3><p>尖沙咀・重慶大廈。ラップ シャン ホステルから変更。</p><p>Flat C1, C2, 16/F, Block C, Chungking Mansion, 36–44 Nathan Road, Tsim Sha Tsui, Hong Kong</p><p>香港九龍尖沙咀彌敦道36–44號 重慶大廈C座16樓C1、C2</p><p><a href="https://www.google.com/maps/search/?api=1&amp;query=Asia%20Inn%20Block%20C%20Chungking%20Mansions%20Hong%20Kong" target="_blank" rel="noopener">宿の地図 ↗</a>　<a href="https://hk.trip.com/hotels/hong-kong-hotel-detail-19829253/asia-inn/" target="_blank" rel="noopener">施設の掲載情報 ↗</a></p>`;
+  host.innerHTML = `<small>宿泊先確定・10/29〜10/30</small><h3>威利来ホテル 香港 / Rai Lei Hostel</h3><p>香港威利萊賓館。旺角駅近くの拠点。15:00以降チェックイン・12:00までチェックアウト。</p><p>Flat A, 4/F, Rex Building, 648–652 Nathan Road, Mong Kok, Kowloon, Hong Kong</p><p>香港九龍旺角彌敦道648–652號 皇上皇大廈4樓A室</p><p><a href="https://www.google.com/maps/search/?api=1&amp;query=Rai%20Lei%20Hostel%20648%20652%20Nathan%20Road%20Mong%20Kok" target="_blank" rel="noopener">宿の地図 ↗</a>　<a href="https://hk.trip.com/hotels/hong-kong-hotel-detail-1912720/rai-lei-hotel/" target="_blank" rel="noopener">施設の掲載情報 ↗</a></p>`;
 }
 renderHotel();
 
