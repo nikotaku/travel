@@ -69,6 +69,12 @@ $$('.entrance').forEach(card => card.classList.toggle('is-now', card.dataset.ope
 window.addEventListener('popstate', () => openStage(location.hash.slice(1), { fromHistory: true, instant: true }));
 
 const hotels = {
+  lapshun: {
+    name: 'ラップ シャン ホステル / Lap Shun Hostel',
+    area: '佐敦駅近くの宿泊候補。10/29泊・10/30チェックアウト想定。空室・料金は未確認。19:30に尖沙咀の海沿い、20:00の光のショー、その後に尖沙咀・廟街を歩く計画の拠点。',
+    map: 'Lap Shun Hostel Hong Kong Jordan',
+    official: 'https://www.booking.com/hotel/hk/lap-shun-hostel.ja.html?checkin=2026-10-29&checkout=2026-10-30'
+  },
   yesinn: {
     name: 'YESINN @ Yau Ma Tei',
     area: '油麻地。廟街に近く、初日の夜と相性がよい節約候補。',
@@ -90,9 +96,9 @@ const hotels = {
 };
 
 function renderHotel() {
-  const selected = hotels[state.hotel];
+  const selected = hotels[state.hotel || 'lapshun'];
   const host = $('#selected-hotel');
-  $$('.hotel-options [data-hotel]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.hotel === state.hotel)));
+  $$('.hotel-options [data-hotel]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.hotel === (state.hotel || 'lapshun'))));
   if (!selected) {
     host.className = 'selected-hotel empty';
     host.innerHTML = '<b>宿はまだ未選択</b><br>予約した宿、または比較する候補を下から選ぶ。';
@@ -100,7 +106,7 @@ function renderHotel() {
   }
   const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selected.map)}`;
   host.className = 'selected-hotel';
-  host.innerHTML = `<small>この端末に保存した宿</small><h3>${selected.name}</h3><p>${selected.area}</p><p><a href="${mapUrl}" target="_blank" rel="noopener">地図・英語住所 ↗</a>　<a href="${selected.official}" target="_blank" rel="noopener">公式・予約条件 ↗</a></p>`;
+  host.innerHTML = `<small>${state.hotel ? 'この端末で選んだ候補（予約確定ではありません）' : '今回の第一候補（未予約・空室確認前）'}</small><h3>${selected.name}</h3><p>${selected.area}</p><p><a href="${mapUrl}" target="_blank" rel="noopener">地図・英語住所 ↗</a>　<a href="${selected.official}" target="_blank" rel="noopener">施設案内・予約条件 ↗</a></p>`;
 }
 
 $$('[data-hotel]').forEach(button => button.addEventListener('click', () => {
