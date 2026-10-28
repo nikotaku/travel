@@ -68,52 +68,11 @@ $$('.entrance').forEach(card => card.classList.toggle('is-now', card.dataset.ope
 
 window.addEventListener('popstate', () => openStage(location.hash.slice(1), { fromHistory: true, instant: true }));
 
-const hotels = {
-  lapshun: {
-    name: 'ラップ シャン ホステル / Lap Shun Hostel',
-    area: '佐敦駅近くの宿泊候補。10/29泊・10/30チェックアウト想定。空室・料金は未確認。19:30に尖沙咀の海沿い、20:00の光のショー、その後に尖沙咀・廟街を歩く計画の拠点。',
-    map: 'Lap Shun Hostel Hong Kong Jordan',
-    official: 'https://www.booking.com/hotel/hk/lap-shun-hostel.ja.html?checkin=2026-10-29&checkout=2026-10-30'
-  },
-  yesinn: {
-    name: 'YESINN @ Yau Ma Tei',
-    area: '油麻地。廟街に近く、初日の夜と相性がよい節約候補。',
-    map: 'Yesinn Yau Ma Tei Hong Kong',
-    official: 'https://yesinn.com/en/en/en/faq-yesinn-ymt-hostel'
-  },
-  meiho: {
-    name: 'YHA Mei Ho House',
-    area: '深水埗。再定住住宅を再利用した、旅のテーマに最も近い宿。',
-    map: 'YHA Mei Ho House Youth Hostel Hong Kong',
-    official: 'https://www.yha.org.hk/en/hostel/yha-mei-ho-house-youth-hostel/'
-  },
-  mkstay: {
-    name: 'MK STAY',
-    area: '旺角。相部屋を避けたい場合の個室候補。',
-    map: 'MK STAY Hong Kong',
-    official: 'https://www.mkstay.com.hk/location/'
-  }
-};
-
 function renderHotel() {
-  const selected = hotels[state.hotel || 'lapshun'];
   const host = $('#selected-hotel');
-  $$('.hotel-options [data-hotel]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.hotel === (state.hotel || 'lapshun'))));
-  if (!selected) {
-    host.className = 'selected-hotel empty';
-    host.innerHTML = '<b>宿はまだ未選択</b><br>予約した宿、または比較する候補を下から選ぶ。';
-    return;
-  }
-  const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selected.map)}`;
   host.className = 'selected-hotel';
-  host.innerHTML = `<small>${state.hotel ? 'この端末で選んだ候補（予約確定ではありません）' : '今回の第一候補（未予約・空室確認前）'}</small><h3>${selected.name}</h3><p>${selected.area}</p><p><a href="${mapUrl}" target="_blank" rel="noopener">地図・英語住所 ↗</a>　<a href="${selected.official}" target="_blank" rel="noopener">施設案内・予約条件 ↗</a></p>`;
+  host.innerHTML = `<small>宿泊先確定（ユーザー指定）</small><h3>アジアホテル 香港 / Asia Inn</h3><p>尖沙咀・重慶大廈。ラップ シャン ホステルから変更。</p><p>Flat C1, C2, 16/F, Block C, Chungking Mansion, 36–44 Nathan Road, Tsim Sha Tsui, Hong Kong</p><p>香港九龍尖沙咀彌敦道36–44號 重慶大廈C座16樓C1、C2</p><p><a href="https://www.google.com/maps/search/?api=1&amp;query=Asia%20Inn%20Block%20C%20Chungking%20Mansions%20Hong%20Kong" target="_blank" rel="noopener">宿の地図 ↗</a>　<a href="https://hk.trip.com/hotels/hong-kong-hotel-detail-19829253/asia-inn/" target="_blank" rel="noopener">施設の掲載情報 ↗</a></p>`;
 }
-
-$$('[data-hotel]').forEach(button => button.addEventListener('click', () => {
-  state.hotel = button.dataset.hotel;
-  saveState();
-  renderHotel();
-}));
 renderHotel();
 
 function renderPrepProgress(saved) {
