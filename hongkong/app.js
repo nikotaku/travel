@@ -2,8 +2,8 @@
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-const stages = ['prep', 'before', 'flight', 'arrival', 'day2', 'tickets'];
-const labels = { prep: '準備編', before: '出発前', flight: '飛行機', arrival: '到着後', day2: '2日目', tickets: 'eチケット' };
+const stages = ['prep', 'before', 'flight', 'arrival', 'day2', 'phrases', 'tickets'];
+const labels = { prep: '準備編', before: '出発前', flight: '飛行機', arrival: '到着後', day2: '2日目', tickets: 'eチケット', phrases: '会話・ボイス' };
 const storageKey = 'hk2026-stage-guide';
 
 function readState() {
@@ -42,6 +42,7 @@ let recommended = suggestedStage();
 
 function openStage(stage, options = {}) {
   const valid = stages.includes(stage);
+  if (stage !== 'phrases' && 'speechSynthesis' in window) window.speechSynthesis.cancel();
   $('#home-view').hidden = valid;
   $$('.stage-view').forEach(view => { view.hidden = view.dataset.stage !== stage; });
   $('#stage-nav').hidden = !valid;
